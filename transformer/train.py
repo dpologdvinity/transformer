@@ -26,10 +26,10 @@ class RunConfig:
     task: str
     pos_encoding: str
     seed: int
-    d_model: int = 128
+    d_model: int = 64
     num_heads: int = 4
-    num_layers: int = 4
-    d_ff: int = 512
+    num_layers: int = 3
+    d_ff: int = 256
     dropout: float = 0.0
     batch_size: int = 64
     steps: int = 5000
@@ -96,11 +96,26 @@ def train(config, log_every=250):
 
 
 @torch.no_grad()
+def teacher_forced_correct(model, prompt, answer):
+    """
+    Feeds [prompt, answer] in one pass and checks each answer token against the
+    model's argmax prediction given the true prefix.
+    A row is all True exactly when greedy decoding would reproduce the answer, so
+    exact match from this single pass equals exact match from step-by-step decoding.
+    :param prompt: (batch_size, n + 2) = [BOS, x, SEP]
+    :param answer: (batch_size, n + 1) = [y, EOS]
+    :return: BoolTensor (batch_size, n + 1)
+    """
+    tokens = torch.cat([prompt, answer[:, :-1]], dim=1)
+    predictions = model(tokens)[:, prompt.size(1) - 1:].argmax(dim=-1)
+    return predictions == answer
+
+
+@torch.no_grad()
 def evaluate_lengths(model, task, lengths, samples, batch_size=256):
     """
-    Greedy-decodes n + 1 tokens after SEP for each length n.
-    exact_match:    all n symbols and the final EOS are correct
-    token_accuracy: fraction of the n symbol positions that are correct
+    exact_match:    all n symbols and the final EOS are correct (same as greedy decoding)
+    token_accuracy: fraction of the n symbols predicted correctly given the true prefix
     :return: {n: {"exact_match": float, "token_accuracy": float}}
     """
     model.eval()
@@ -111,7 +126,7 @@ def evaluate_lengths(model, task, lengths, samples, batch_size=256):
         while done < samples:
             size = min(batch_size, samples - done)
             prompt, answer = sample_fixed_length(task, size, n, generator)
-            correct = model.generate(prompt, n + 1) == answer
+            correct = teacher_forced_correct(model, prompt, answer)
             exact += correct.all(dim=1).sum().item()
             tokens += correct[:, :n].sum().item()
             done += size

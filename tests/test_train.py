@@ -4,28 +4,31 @@ import pytest
 import torch
 
 from transformer.decoder_lm import DecoderOnlyLM
-from transformer.tasks import EOS, PAD, make_target
-from transformer.train import RunConfig, evaluate_lengths, run, run_name, train
+from transformer.tasks import EOS, PAD, VOCAB_SIZE, make_target, sample_fixed_length
+from transformer.train import RunConfig, evaluate_lengths, run, run_name, teacher_forced_correct, train
 
 TINY = dict(d_model=32, num_heads=2, num_layers=2, d_ff=64)
 
 
 class OracleModel:
-    """ Stub that answers from the prompt, optionally corrupted. """
+    """ Stub whose next-token predictions are the correct answer, optionally corrupted. """
     def __init__(self, task, corrupt=None):
         self.task, self.corrupt = task, corrupt
 
     def eval(self):
         return self
 
-    def generate(self, prompt, num_new_tokens):
-        x = prompt[:, 1:-1]
-        out = torch.cat([make_target(self.task, x), torch.full((x.size(0), 1), EOS)], dim=1)
+    def __call__(self, tokens):
+        n = (tokens.size(1) - 2) // 2  # tokens = [BOS, x1..xn, SEP, y1..yn]
+        x = tokens[:, 1:n + 1]
+        answer = torch.cat([make_target(self.task, x), torch.full((x.size(0), 1), EOS)], dim=1)
         if self.corrupt == "drop_eos":
-            out[:, -1] = PAD
+            answer[:, -1] = PAD
         if self.corrupt == "early_eos":
-            out[:, 0] = EOS
-        return out
+            answer[:, 0] = EOS
+        logits = torch.zeros(*tokens.shape, VOCAB_SIZE)
+        logits[:, n + 1:].scatter_(-1, answer.unsqueeze(-1), 1.0)
+        return logits
 
 
 @pytest.mark.parametrize("task", ["copy", "reverse"])
@@ -73,3 +76,18 @@ def test_run_writes_json(tmp_path):
     assert set(data["eval"]) == {"1", "2", "3"}
     assert (tmp_path / "ckpt" / "reverse_alibi_seed1.pt").exists()
     assert not list((tmp_path / "runs").glob("*.tmp"))
+
+
+def test_teacher_forced_scoring_agrees_with_greedy_decoding():
+    # Exact match from one teacher-forced pass equals exact match from greedy decoding:
+    # a model's own greedy output is always fully "correct" under teacher forcing,
+    # and changing any answer token makes that row incorrect.
+    torch.manual_seed(0)
+    model = DecoderOnlyLM(VOCAB_SIZE, 32, 4, 2, 64, "rope").eval()
+    prompt, _ = sample_fixed_length("copy", 16, 6, torch.Generator().manual_seed(0))
+    greedy = model.generate(prompt, 7)
+    assert teacher_forced_correct(model, prompt, greedy).all()
+    altered = greedy.clone()
+    altered[:8, 3] = (altered[:8, 3] + 1) % VOCAB_SIZE
+    rows_correct = teacher_forced_correct(model, prompt, altered).all(dim=1)
+    assert not rows_correct[:8].any() and rows_correct[8:].all()
