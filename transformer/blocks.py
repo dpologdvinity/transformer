@@ -38,25 +38,26 @@ def create_padding_mask(seq, pad_idx=0):
 
 class TransformerEncoderBlock(nn.Module):
     """ Implements a single Transformer Encoder Block """
-    def __init__(self, d_model, num_heads, d_ff, dropout=0.1):
+    def __init__(self, d_model, num_heads, d_ff, dropout=0.1, rotary=None):
         super(TransformerEncoderBlock, self).__init__()
 
-        self.mha = MultiHeadAttention(d_model, num_heads)
+        self.mha = MultiHeadAttention(d_model, num_heads, rotary)
         self.ffn = PositionwiseFeedForward(d_model, d_ff, dropout)
         self.layernorm1 = nn.LayerNorm(d_model)
         self.layernorm2 = nn.LayerNorm(d_model)
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
 
-    def forward(self, x, mask=None):
+    def forward(self, x, mask=None, bias=None):
         """
         :param x: Input, shape (batch_size, seq_len, d_model)
         :param mask: Optional mask (e.g., for padding)
+        :param bias: Optional additive attention bias (e.g., ALiBi)
         :return: Output, shape (batch_size, seq_len, d_model)
         """
 
         # 1. MHA + "Add & Norm"
-        mha_output = self.mha(x, x, x, mask)
+        mha_output = self.mha(x, x, x, mask, bias)
         x_with_mha = self.layernorm1(x + self.dropout1(mha_output))
 
         # 2. FFN + "Add & Norm"

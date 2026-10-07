@@ -47,7 +47,7 @@ class MultiHeadAttention(nn.Module):
     """
     Implements a flexible Multi-Head Attention module.
     """
-    def __init__(self, d_model, num_heads):
+    def __init__(self, d_model, num_heads, rotary=None):
         super(MultiHeadAttention, self).__init__()
         assert d_model % num_heads == 0, "d_model must be divisible by num_heads"
 
@@ -59,6 +59,9 @@ class MultiHeadAttention(nn.Module):
         self.W_k = nn.Linear(d_model, d_model, bias=False)
         self.W_v = nn.Linear(d_model, d_model, bias=False)
         self.W_o = nn.Linear(d_model, d_model, bias=False)
+
+        # Optional rotary position embedding applied to Q and K
+        self.rotary = rotary
 
         # Weights from the most recent forward pass, kept for visualization
         self.attention_weights = None
@@ -98,6 +101,11 @@ class MultiHeadAttention(nn.Module):
         Q = self.split_heads(Q)
         K = self.split_heads(K)
         V = self.split_heads(V)
+
+        # 2b. Rotate Q and K by position (RoPE), if enabled
+        if self.rotary is not None:
+            Q = self.rotary(Q)
+            K = self.rotary(K)
 
         # 3. Attention
         context_vector, weights = scaled_dot_product_attention(Q, K, V, mask, bias)
