@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def scaled_dot_product_attention(Q, K, V, mask=None):
+def scaled_dot_product_attention(Q, K, V, mask=None, bias=None):
     """
     Implements the core attention formula:
     Attention(Q, K, V) = softmax( (QK^T) / sqrt(d_k) ) * V
@@ -14,6 +14,7 @@ def scaled_dot_product_attention(Q, K, V, mask=None):
     :param K: Keys, shape (batch_size, num_heads, seq_len, d_k)
     :param V: Values, shape (batch_size, num_heads, seq_len_v, d_v) (Note: seq_len_k == seq_len_v)
     :param mask: Optional mask, shape (batch_size, 1, seq_len, seq_len)
+    :param bias: Optional additive score bias, broadcastable to (batch_size, num_heads, seq_len, seq_len)
     :return: A tuple of (context_vector, attention_weights)
     """
     # 1. Get d_k
@@ -25,14 +26,18 @@ def scaled_dot_product_attention(Q, K, V, mask=None):
     # 3. Scale scores
     scores = scores / math.sqrt(d_k)
 
-    # 4. Apply mask (if provided)
+    # 4. Add positional bias (e.g. ALiBi), if provided
+    if bias is not None:
+        scores = scores + bias
+
+    # 5. Apply mask (if provided)
     if mask is not None:
         scores = scores.masked_fill(mask == 0, float('-inf'))
 
-    # 5. Apply softmax to get weights
+    # 6. Apply softmax to get weights
     weights = F.softmax(scores, dim=-1)
 
-    # 6. Compute context vector (weights * V)
+    # 7. Compute context vector (weights * V)
     context_vector = torch.matmul(weights, V)
 
     return context_vector, weights
@@ -55,6 +60,9 @@ class MultiHeadAttention(nn.Module):
         self.W_v = nn.Linear(d_model, d_model, bias=False)
         self.W_o = nn.Linear(d_model, d_model, bias=False)
 
+        # Weights from the most recent forward pass, kept for visualization
+        self.attention_weights = None
+
     def split_heads(self, x):
         """
         Splits the last dimension d_model into (num_heads, d_k).
@@ -65,13 +73,14 @@ class MultiHeadAttention(nn.Module):
         x = x.view(batch_size, seq_len, self.num_heads, self.d_k)
         return x.transpose(1, 2)  # (B, num_heads, seq_len, d_k)
 
-    def forward(self, x_q, x_k, x_v, mask=None):
+    def forward(self, x_q, x_k, x_v, mask=None, bias=None):
         """
         A flexible forward pass.
         :param x_q: Input for Queries, shape (batch_size, seq_len_q, d_model)
         :param x_k: Input for Keys, shape (batch_size, seq_len_k, d_model)
         :param x_v: Input for Values, shape (batch_size, seq_len_v, d_model)
         :param mask: Optional mask
+        :param bias: Optional additive score bias
         :return: Output, shape (batch_size, seq_len_q, d_model)
 
         - For Self-Attention: x_q, x_k, x_v will be the SAME tensor.
@@ -91,7 +100,8 @@ class MultiHeadAttention(nn.Module):
         V = self.split_heads(V)
 
         # 3. Attention
-        context_vector, _ = scaled_dot_product_attention(Q, K, V, mask)
+        context_vector, weights = scaled_dot_product_attention(Q, K, V, mask, bias)
+        self.attention_weights = weights.detach()
 
         # 4. Combine Heads
         seq_len_q = x_q.size(1)
