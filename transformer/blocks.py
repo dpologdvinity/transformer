@@ -27,6 +27,15 @@ def create_causal_mask(seq_len):
     return (mask == 0).unsqueeze(0).unsqueeze(0) # Shape (1, 1, seq_len, seq_len)
 
 
+def create_padding_mask(seq, pad_idx=0):
+    """
+    Masks out padding tokens so attention never reads them.
+    :param seq: Token IDs, shape (batch_size, seq_len)
+    :return: A mask tensor of shape (batch_size, 1, 1, seq_len), True for real tokens
+    """
+    return (seq != pad_idx).unsqueeze(1).unsqueeze(2)
+
+
 class TransformerEncoderBlock(nn.Module):
     """ Implements a single Transformer Encoder Block """
     def __init__(self, d_model, num_heads, d_ff, dropout=0.1):

@@ -44,20 +44,21 @@ class Transformer(nn.Module):
             x = layer(x, src_mask)
         return x
 
-    def decode(self, tgt, memory, causal_mask, tgt_mask):
+    def decode(self, tgt, memory, causal_mask, src_mask=None):
         # Embed and add position info
         x = self.tgt_embedding(tgt)
         x = self.dropout(x)
 
         # Pass through all decoder layers
         for layer in self.decoder_layers:
-            x = layer(x, memory, causal_mask, tgt_mask)
+            x = layer(x, memory, causal_mask, src_mask)
         return x
 
-    def forward(self, src, tgt, src_mask=None, tgt_mask=None):
+    def forward(self, src, tgt, src_mask=None):
         """
         :param src: Source Sequence (batch_size, src_len)
         :param tgt: Target Sequence (batch_size, tgt_len)
+        :param src_mask: Optional source padding mask, shape (batch_size, 1, 1, src_len)
         """
         # 1. Create Causal Mask for the Decoder (Look-ahead mask)
         tgt_seq_len = tgt.size(1)
@@ -67,14 +68,14 @@ class Transformer(nn.Module):
         memory = self.encode(src, src_mask)
 
         # 3. Run Decoder
-        output = self.decode(tgt, memory, causal_mask, tgt_mask)
+        output = self.decode(tgt, memory, causal_mask, src_mask)
 
         # 4. Final Projection
         logits = self.final_linear(output)
         return logits
 
 
-def greedy_decode(model, src_seq, max_len, start_symbol=SOS_IDX):
+def greedy_decode(model, src_seq, max_len, start_symbol=SOS_IDX, src_mask=None):
     """
     Performs inference using greedy decoding.
     """
@@ -82,7 +83,7 @@ def greedy_decode(model, src_seq, max_len, start_symbol=SOS_IDX):
     device = src_seq.device
 
     # 1. Encode the source
-    memory = model.encode(src_seq, src_mask=None)
+    memory = model.encode(src_seq, src_mask)
 
     # 2. Initialize the decoder input with <SOS>
     ys = torch.ones(1, 1).fill_(start_symbol).type(torch.long).to(device)
@@ -90,10 +91,10 @@ def greedy_decode(model, src_seq, max_len, start_symbol=SOS_IDX):
     # 3. Autoregressive generation
     for i in range(max_len-1):
         # Create causal mask for current sequence length
-        tgt_mask = create_causal_mask(ys.size(1)).to(device)
+        causal_mask = create_causal_mask(ys.size(1)).to(device)
 
         # Decode
-        out = model.decode(ys, memory, tgt_mask, tgt_mask=None)
+        out = model.decode(ys, memory, causal_mask, src_mask)
 
         # Get projection of the last token
         prob = model.final_linear(out[:, -1])
