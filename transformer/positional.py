@@ -33,7 +33,8 @@ class TokenAndPositionalEmbedding(nn.Module):
         # 2. Positional Encoding
         # We 'register_buffer' so 'pe' is part of the model's state,
         # but not a trainable parameter.
-        self.register_buffer('pe', sinusoidal_table(max_seq_len, d_model).unsqueeze(0)) # Shape (1, max_seq_len, d_model)
+        # Shape (1, max_seq_len, d_model)
+        self.register_buffer('pe', sinusoidal_table(max_seq_len, d_model).unsqueeze(0))
 
     def forward(self, x):
         """

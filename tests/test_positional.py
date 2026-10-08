@@ -22,7 +22,10 @@ def test_rope_scores_depend_only_on_offset():
     rope = RotaryEmbedding(head_dim=16, max_seq_len=64)
     q, k = torch.randn(16), torch.randn(16)
     rq, rk = rope(q.expand(1, 1, 64, 16)), rope(k.expand(1, 1, 64, 16))
-    score = lambda m, n: (rq[0, 0, m] * rk[0, 0, n]).sum()
+
+    def score(m, n):
+        return (rq[0, 0, m] * rk[0, 0, n]).sum()
+
     assert torch.allclose(score(10, 3), score(30, 23), atol=1e-4)
     assert not torch.allclose(score(10, 3), score(10, 9), atol=1e-4)
 

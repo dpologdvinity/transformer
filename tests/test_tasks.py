@@ -2,8 +2,17 @@ import pytest
 import torch
 
 from transformer.tasks import (
-    BOS, EOS, NUM_SYMBOLS, PAD, SEP, VOCAB_SIZE,
-    answer_query_positions, make_target, sample_batch, sample_fixed_length, source_positions,
+    BOS,
+    EOS,
+    NUM_SYMBOLS,
+    PAD,
+    SEP,
+    VOCAB_SIZE,
+    answer_query_positions,
+    make_target,
+    sample_batch,
+    sample_fixed_length,
+    source_positions,
 )
 
 
@@ -31,7 +40,7 @@ def test_unknown_task_raises():
 def test_batch_format_and_loss_mask(task):
     batch = sample_batch(task, 32, 1, 16, gen())
     seq = torch.cat([batch.inputs[:, :1], batch.targets], dim=1)  # rebuild full sequences
-    for row, targets, mask in zip(seq, batch.targets, batch.loss_mask):
+    for row, targets, mask in zip(seq, batch.targets, batch.loss_mask, strict=True):
         n = int((row >= 4).sum()) // 2
         x, y = row[1:n + 1], row[n + 2:2 * n + 2]
         assert row[0] == BOS and row[n + 1] == SEP and row[2 * n + 2] == EOS
