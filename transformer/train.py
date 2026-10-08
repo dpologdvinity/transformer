@@ -43,6 +43,13 @@ class RunConfig:
     eval_samples: int = 256
     max_seq_len: int = 256
 
+    def __post_init__(self):
+        # A sequence of length n is fed as 2n + 2 tokens ([BOS, x, SEP, y] for teacher forcing)
+        for name in ("train_max_len", "eval_max_len"):
+            if 2 * getattr(self, name) + 2 > self.max_seq_len:
+                raise ValueError(f"{name}={getattr(self, name)} needs {2 * getattr(self, name) + 2} positions, "
+                                 f"more than max_seq_len={self.max_seq_len}")
+
 
 def run_name(config):
     return f"{config.task}_{config.pos_encoding}_seed{config.seed}"
@@ -84,7 +91,7 @@ def train(config, log_every=250, verbose=False):
 
         optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_clip)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_clip, error_if_nonfinite=True)
         optimizer.step()
         scheduler.step()
 

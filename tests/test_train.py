@@ -97,3 +97,44 @@ def test_verbose_training_prints_progress(capsys):
     train(RunConfig("copy", "none", 0, steps=4, warmup_steps=1, **TINY), log_every=2, verbose=True)
     out = capsys.readouterr().out
     assert "copy_none_seed0 step 2/4 loss" in out and "copy_none_seed0 step 4/4 loss" in out
+
+
+def test_config_rejects_lengths_that_overflow_the_model():
+    with pytest.raises(ValueError, match="eval_max_len"):
+        RunConfig("copy", "rope", 0, eval_max_len=200, max_seq_len=256)
+    with pytest.raises(ValueError, match="train_max_len"):
+        RunConfig("copy", "rope", 0, train_max_len=200, eval_max_len=20, max_seq_len=256)
+
+
+def test_non_finite_gradient_on_the_last_step_raises(monkeypatch):
+    captured = {}
+    real_init = torch.optim.AdamW.__init__
+    real_backward = torch.Tensor.backward
+
+    def capture_params(self, params, *args, **kwargs):
+        captured["params"] = list(params)
+        real_init(self, captured["params"], *args, **kwargs)
+
+    def poisoned_backward(self, *args, **kwargs):
+        real_backward(self, *args, **kwargs)
+        for p in captured["params"]:
+            p.grad.fill_(float("inf"))
+
+    monkeypatch.setattr(torch.optim.AdamW, "__init__", capture_params)
+    monkeypatch.setattr(torch.Tensor, "backward", poisoned_backward)
+    with pytest.raises(RuntimeError):
+        train(RunConfig("copy", "none", 0, steps=1, warmup_steps=1, **TINY))
+
+
+def test_every_model_is_scored_on_identical_prompts():
+    class Recorder(OracleModel):
+        def __call__(self, tokens):
+            self.seen.append(tokens.clone())
+            return super().__call__(tokens)
+
+    a, b = Recorder("copy"), Recorder("reverse")
+    a.seen, b.seen = [], []
+    evaluate_lengths(a, "copy", [3, 5], samples=8)
+    evaluate_lengths(b, "copy", [3, 5], samples=8)
+    assert len(a.seen) == 2
+    assert all(torch.equal(x, y) for x, y in zip(a.seen, b.seen, strict=True))
