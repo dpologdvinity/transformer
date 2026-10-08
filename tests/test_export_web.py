@@ -43,3 +43,10 @@ def test_attention_maps_for_reverse_seed0(tmp_path):
     assert len(cell["weights"]) == 8 and all(len(row) == 8 for row in cell["weights"])
     assert all(0.0 <= w <= 1.0 for row in cell["weights"] for w in row)
     assert {"layer", "head", "score"} <= set(cell)
+
+
+def test_kv_cache_benchmark_is_passed_through():
+    runs = [fake_run("copy", "none", 0, [1.0] * 20)]
+    bench = {"threads": 1, "reps": 3, "rows": [{"batch_size": 64, "new_tokens": 128, "speedup": 20.6}]}
+    assert build_study(runs, checkpoint_dir=None, kv_cache=bench)["kv_cache"] == bench
+    assert "kv_cache" not in build_study(runs, checkpoint_dir=None)

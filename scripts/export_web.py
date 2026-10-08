@@ -1,7 +1,8 @@
 """
 Export the study's results as one JSON file for the website's interactive page.
 
-    uv run python -m scripts.export_web [--runs results/runs] [--checkpoints checkpoints] [--out results/web/study.json]
+    uv run python -m scripts.export_web [--runs results/runs] [--checkpoints checkpoints]
+        [--kv-cache results/kv_cache.json] [--out results/web/study.json]
 """
 import argparse
 import json
@@ -49,7 +50,7 @@ def _attention(run, checkpoint_dir, lengths, task="reverse"):
     return maps
 
 
-def build_study(runs, checkpoint_dir, lengths=(16, 32)):
+def build_study(runs, checkpoint_dir, lengths=(16, 32), kv_cache=None):
     groups = group_runs(runs)
     curves = {}
     for (task, pe), group in groups.items():
@@ -64,6 +65,8 @@ def build_study(runs, checkpoint_dir, lengths=(16, 32)):
         for r in runs:
             if r["config"]["task"] == "reverse" and r["config"]["seed"] == 0:
                 study["attention"][r["config"]["pos_encoding"]] = _attention(r, checkpoint_dir, lengths)
+    if kv_cache is not None:
+        study["kv_cache"] = kv_cache
     return study
 
 
@@ -71,13 +74,17 @@ def main():
     parser = argparse.ArgumentParser(description="Export study data for the website.")
     parser.add_argument("--runs", default="results/runs")
     parser.add_argument("--checkpoints", default="checkpoints")
+    parser.add_argument("--kv-cache", default="results/kv_cache.json", help="skipped if the file is missing")
     parser.add_argument("--out", default="results/web/study.json")
     args = parser.parse_args()
 
     torch.set_num_threads(1)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(build_study(load_runs(args.runs), args.checkpoints), separators=(",", ":")) + "\n")
+    kv_cache = Path(args.kv_cache)
+    kv_cache = json.loads(kv_cache.read_text()) if kv_cache.exists() else None
+    study = build_study(load_runs(args.runs), args.checkpoints, kv_cache=kv_cache)
+    out.write_text(json.dumps(study, separators=(",", ":")) + "\n")
     print(f"wrote {out} ({out.stat().st_size // 1024} KB)")
 
 
