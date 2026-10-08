@@ -61,7 +61,7 @@ def lr_factor(config, step):
     return 0.5 * (1 + math.cos(math.pi * progress))
 
 
-def train(config, log_every=250):
+def train(config, log_every=250, verbose=False):
     """
     :return: (trained model, mean training loss over each block of log_every steps)
     """
@@ -92,6 +92,8 @@ def train(config, log_every=250):
         if (step + 1) % log_every == 0:
             history.append(running / log_every)
             running = 0.0
+            if verbose:
+                print(f"{run_name(config)} step {step + 1}/{config.steps} loss {history[-1]:.4f}", flush=True)
     return model, history
 
 
@@ -141,7 +143,7 @@ def in_distribution_exact_match(result):
     return sum(result["eval"][str(n)]["exact_match"] for n in lengths) / len(lengths)
 
 
-def run(config, out_dir, checkpoint_dir):
+def run(config, out_dir, checkpoint_dir, verbose=False):
     """ Train, save the weights, evaluate every length 1..eval_max_len, and write <run_name>.json. """
     out_dir, checkpoint_dir = Path(out_dir), Path(checkpoint_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -149,7 +151,7 @@ def run(config, out_dir, checkpoint_dir):
     name = run_name(config)
 
     start = time.perf_counter()
-    model, history = train(config)
+    model, history = train(config, verbose=verbose)
     train_seconds = time.perf_counter() - start
     torch.save(model.state_dict(), checkpoint_dir / f"{name}.pt")
 
@@ -184,7 +186,7 @@ def main():
     overrides = {"steps": args.steps, "eval_samples": args.eval_samples}
     config = RunConfig(args.task, args.pos_encoding, args.seed,
                        **{k: v for k, v in overrides.items() if v is not None})
-    result = run(config, args.out, args.checkpoints)
+    result = run(config, args.out, args.checkpoints, verbose=True)
     print(f"{run_name(config)}: trained in {result['train_seconds']}s, "
           f"in-distribution exact match {in_distribution_exact_match(result):.3f}")
 

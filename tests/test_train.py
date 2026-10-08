@@ -91,3 +91,9 @@ def test_teacher_forced_scoring_agrees_with_greedy_decoding():
     altered[:8, 3] = (altered[:8, 3] + 1) % VOCAB_SIZE
     rows_correct = teacher_forced_correct(model, prompt, altered).all(dim=1)
     assert not rows_correct[:8].any() and rows_correct[8:].all()
+
+
+def test_verbose_training_prints_progress(capsys):
+    train(RunConfig("copy", "none", 0, steps=4, warmup_steps=1, **TINY), log_every=2, verbose=True)
+    out = capsys.readouterr().out
+    assert "copy_none_seed0 step 2/4 loss" in out and "copy_none_seed0 step 4/4 loss" in out
