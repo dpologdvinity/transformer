@@ -105,7 +105,7 @@ approximate.
 
 ```bash
 uv sync                                                    # Python 3.12, CPU PyTorch
-uv run pytest                                              # 78 tests
+uv run pytest                                              # 79 tests
 uv run python -m scripts.sweep --seeds 0 1 2 --steps 5000  # results/runs/*.json
 uv run python -m scripts.plot                              # figures + results/summary.md
 uv run python -m scripts.export_web                        # results/web/study.json for the website
@@ -142,3 +142,7 @@ cross-attention and greedy decoding, built only from PyTorch tensor operations. 
 suite checks the attention against `torch.nn.functional.scaled_dot_product_attention` and
 `torch.nn.MultiheadAttention` numerically. The decoder-only model for this study reuses
 the same blocks.
+
+## License
+
+[MIT](LICENSE)
