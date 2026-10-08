@@ -9,7 +9,7 @@
     "d_ff": 256,
     "dropout": 0.0,
     "batch_size": 64,
-    "steps": 3000,
+    "steps": 5000,
     "lr": 0.001,
     "warmup_steps": 250,
     "weight_decay": 0.01,
@@ -22,19 +22,27 @@
   },
   "loss_history": [
     2.712873118400574,
-    1.6177044377326966,
-    0.9159527566432953,
-    0.41955122095346453,
-    0.2457518919110298,
-    0.1553585180491209,
-    0.10482544089853764,
-    0.06976119508594275,
-    0.04806749384850264,
-    0.03298325840011239,
-    0.024596712470054627,
-    0.021410959508270024
+    1.6238497037887574,
+    0.9455001718997955,
+    0.4333869426250458,
+    0.2662541974782944,
+    0.17739925411343574,
+    0.11638366116583347,
+    0.08913168816268444,
+    0.08475005853176117,
+    0.06469412400946022,
+    0.041314714290201664,
+    0.028088008003309368,
+    0.020545640552416443,
+    0.01520323907257989,
+    0.010622707404661924,
+    0.006258122083963826,
+    0.004547982858493924,
+    0.003552981189568527,
+    0.0030952853021444754,
+    0.0025653305624146016
   ],
-  "train_seconds": 1442.1,
+  "train_seconds": 948.0,
   "eval": {
     "1": {
       "exact_match": 1.0,
@@ -45,188 +53,188 @@
       "token_accuracy": 1.0
     },
     "3": {
-      "exact_match": 0.99609375,
-      "token_accuracy": 0.9986979166666666
+      "exact_match": 1.0,
+      "token_accuracy": 1.0
     },
     "4": {
-      "exact_match": 0.9921875,
-      "token_accuracy": 0.998046875
+      "exact_match": 1.0,
+      "token_accuracy": 1.0
     },
     "5": {
-      "exact_match": 0.98828125,
-      "token_accuracy": 0.99921875
+      "exact_match": 0.99609375,
+      "token_accuracy": 1.0
     },
     "6": {
-      "exact_match": 0.99609375,
-      "token_accuracy": 0.9993489583333334
+      "exact_match": 1.0,
+      "token_accuracy": 1.0
     },
     "7": {
-      "exact_match": 0.96875,
-      "token_accuracy": 0.9949776785714286
+      "exact_match": 1.0,
+      "token_accuracy": 1.0
     },
     "8": {
-      "exact_match": 0.98828125,
-      "token_accuracy": 0.99853515625
+      "exact_match": 1.0,
+      "token_accuracy": 1.0
     },
     "9": {
-      "exact_match": 0.96875,
-      "token_accuracy": 0.9965277777777778
+      "exact_match": 0.9921875,
+      "token_accuracy": 0.9991319444444444
     },
     "10": {
-      "exact_match": 0.9765625,
-      "token_accuracy": 0.997265625
+      "exact_match": 0.99609375,
+      "token_accuracy": 0.999609375
     },
     "11": {
-      "exact_match": 0.95703125,
-      "token_accuracy": 0.9957386363636364
+      "exact_match": 0.99609375,
+      "token_accuracy": 0.9996448863636364
     },
     "12": {
-      "exact_match": 0.91015625,
-      "token_accuracy": 0.9921875
+      "exact_match": 0.9921875,
+      "token_accuracy": 0.9993489583333334
     },
     "13": {
-      "exact_match": 0.9140625,
-      "token_accuracy": 0.9924879807692307
+      "exact_match": 0.99609375,
+      "token_accuracy": 0.9996995192307693
     },
     "14": {
-      "exact_match": 0.94140625,
-      "token_accuracy": 0.9955357142857143
+      "exact_match": 0.99609375,
+      "token_accuracy": 0.9997209821428571
     },
     "15": {
-      "exact_match": 0.90234375,
-      "token_accuracy": 0.9927083333333333
+      "exact_match": 0.9921875,
+      "token_accuracy": 0.9994791666666667
     },
     "16": {
-      "exact_match": 0.82421875,
-      "token_accuracy": 0.98583984375
+      "exact_match": 0.97265625,
+      "token_accuracy": 0.998291015625
     },
     "17": {
-      "exact_match": 0.69921875,
-      "token_accuracy": 0.9765625
+      "exact_match": 0.9375,
+      "token_accuracy": 0.9954044117647058
     },
     "18": {
-      "exact_match": 0.4375,
-      "token_accuracy": 0.9509548611111112
+      "exact_match": 0.796875,
+      "token_accuracy": 0.9874131944444444
     },
     "19": {
-      "exact_match": 0.203125,
-      "token_accuracy": 0.91796875
+      "exact_match": 0.4453125,
+      "token_accuracy": 0.9590871710526315
     },
     "20": {
-      "exact_match": 0.0234375,
-      "token_accuracy": 0.8666015625
+      "exact_match": 0.140625,
+      "token_accuracy": 0.9240234375
     },
     "21": {
-      "exact_match": 0.0,
-      "token_accuracy": 0.8151041666666666
+      "exact_match": 0.01171875,
+      "token_accuracy": 0.8681175595238095
     },
     "22": {
-      "exact_match": 0.00390625,
-      "token_accuracy": 0.7752130681818182
+      "exact_match": 0.0,
+      "token_accuracy": 0.8389559659090909
     },
     "23": {
       "exact_match": 0.0,
-      "token_accuracy": 0.709578804347826
+      "token_accuracy": 0.7960258152173914
     },
     "24": {
       "exact_match": 0.0,
-      "token_accuracy": 0.6712239583333334
+      "token_accuracy": 0.7532552083333334
     },
     "25": {
       "exact_match": 0.0,
-      "token_accuracy": 0.6284375
+      "token_accuracy": 0.7103125
     },
     "26": {
       "exact_match": 0.0,
-      "token_accuracy": 0.5695612980769231
+      "token_accuracy": 0.6610576923076923
     },
     "27": {
       "exact_match": 0.0,
-      "token_accuracy": 0.5164930555555556
+      "token_accuracy": 0.6189236111111112
     },
     "28": {
       "exact_match": 0.0,
-      "token_accuracy": 0.47921316964285715
+      "token_accuracy": 0.5848214285714286
     },
     "29": {
       "exact_match": 0.0,
-      "token_accuracy": 0.4331896551724138
+      "token_accuracy": 0.5470096982758621
     },
     "30": {
       "exact_match": 0.0,
-      "token_accuracy": 0.38763020833333334
+      "token_accuracy": 0.5104166666666666
     },
     "31": {
       "exact_match": 0.0,
-      "token_accuracy": 0.3606350806451613
+      "token_accuracy": 0.4676159274193548
     },
     "32": {
       "exact_match": 0.0,
-      "token_accuracy": 0.3314208984375
+      "token_accuracy": 0.4354248046875
     },
     "33": {
       "exact_match": 0.0,
-      "token_accuracy": 0.29142992424242425
+      "token_accuracy": 0.3939393939393939
     },
     "34": {
       "exact_match": 0.0,
-      "token_accuracy": 0.2663143382352941
+      "token_accuracy": 0.3623621323529412
     },
     "35": {
       "exact_match": 0.0,
-      "token_accuracy": 0.24821428571428572
+      "token_accuracy": 0.3275669642857143
     },
     "36": {
       "exact_match": 0.0,
-      "token_accuracy": 0.2329644097222222
+      "token_accuracy": 0.3170572916666667
     },
     "37": {
       "exact_match": 0.0,
-      "token_accuracy": 0.21769425675675674
+      "token_accuracy": 0.2925464527027027
     },
     "38": {
       "exact_match": 0.0,
-      "token_accuracy": 0.19675164473684212
+      "token_accuracy": 0.2616159539473684
     },
     "39": {
       "exact_match": 0.0,
-      "token_accuracy": 0.18810096153846154
+      "token_accuracy": 0.2514022435897436
     },
     "40": {
       "exact_match": 0.0,
-      "token_accuracy": 0.17783203125
+      "token_accuracy": 0.22841796875
     },
     "41": {
       "exact_match": 0.0,
-      "token_accuracy": 0.15891768292682926
+      "token_accuracy": 0.22046493902439024
     },
     "42": {
       "exact_match": 0.0,
-      "token_accuracy": 0.15848214285714285
+      "token_accuracy": 0.20786830357142858
     },
     "43": {
       "exact_match": 0.0,
-      "token_accuracy": 0.14507630813953487
+      "token_accuracy": 0.19195130813953487
     },
     "44": {
       "exact_match": 0.0,
-      "token_accuracy": 0.13849431818181818
+      "token_accuracy": 0.1768465909090909
     },
     "45": {
       "exact_match": 0.0,
-      "token_accuracy": 0.1306423611111111
+      "token_accuracy": 0.17178819444444443
     },
     "46": {
       "exact_match": 0.0,
-      "token_accuracy": 0.123046875
+      "token_accuracy": 0.15718410326086957
     },
     "47": {
       "exact_match": 0.0,
-      "token_accuracy": 0.11993018617021277
+      "token_accuracy": 0.1441156914893617
     },
     "48": {
       "exact_match": 0.0,
-      "token_accuracy": 0.11564127604166667
+      "token_accuracy": 0.14298502604166666
     }
   }
 }
