@@ -7,7 +7,7 @@ on a laptop CPU.
 **Question:** a decoder-only Transformer is trained on sequences of length ≤ 16. How well
 does it handle longer sequences, depending on how it encodes position?
 
-**Result:** no encoding generalizes far. Every model is at 0% exact match by length 23, less than 1.5× the longest training length. How they fail differs: **RoPE** collapses immediately (100% at n = 16, then 43% on copy and 13% on reverse at n = 17, 0% at n = 18); **ALiBi** holds best one step out on copy (99% at n = 17) but not on reverse (31%); **NoPE** starts slipping earliest (already 82% on copy and 70% on reverse at n = 16) but declines the most slowly, keeping a non-zero tail out to n = 22.
+**Result:** no encoding generalizes far. Across 3 seeds, every model is at 0% exact match by length 24, 1.5× the longest training length, and they fail in different ways. **RoPE** breaks first: 100% at n = 16, then 21% on copy one token later and 0% at n = 18. **ALiBi** depends on the task: the best encoding on copy at n = 17 (92%) but collapsing on reverse (34%). **Sinusoidal** is the best on reverse just past training (93% at n = 17, 74% at n = 18). **NoPE** is the paradox: the weakest model inside the training range (87% on copy and 83% on reverse at n = 16), yet the best on both tasks at n = 19 and 20 and the only one still above zero at n = 22.
 
 ![Exact match vs. sequence length](results/length_generalization.png)
 
@@ -30,32 +30,33 @@ step-by-step generation.
 
 ## Results
 
-Exact match (%) at each length, trained on n = 1–16 (one seed, so ± is 0; from [`results/summary.md`](results/summary.md)). "Longest n ≥ 90%" is the largest n such that every length up to it scores at least 90%.
+Exact match (%) at each length, mean ± std over 3 seeds, trained on n = 1–16 (from [`results/summary.md`](results/summary.md)). "Longest n ≥ 90%" is the largest n such that every length up to it scores at least 90%, averaged over seeds.
 
-| Task | Encoding | Seeds | n = 1–16 | n = 17 | n = 18 | n = 20 | n = 24 | Longest n ≥ 90% |
-|---|---|---|---|---|---|---|---|---|
-| copy | NoPE | 1 | 95.8 ± 0.0 | 69.9 ± 0.0 | 43.8 ± 0.0 | 2.3 ± 0.0 | 0.0 ± 0.0 | 15.0 |
-| copy | Sinusoidal | 1 | 94.1 ± 0.0 | 56.2 ± 0.0 | 16.4 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 12.0 |
-| copy | RoPE | 1 | 100.0 ± 0.0 | 43.4 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 16.0 |
-| copy | ALiBi | 1 | 100.0 ± 0.0 | 98.8 ± 0.0 | 67.2 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 17.0 |
-| reverse | NoPE | 1 | 92.2 ± 0.0 | 55.9 ± 0.0 | 36.3 ± 0.0 | 5.9 ± 0.0 | 0.0 ± 0.0 | 11.0 |
-| reverse | Sinusoidal | 1 | 97.8 ± 0.0 | 79.7 ± 0.0 | 52.7 ± 0.0 | 1.6 ± 0.0 | 0.0 ± 0.0 | 16.0 |
-| reverse | RoPE | 1 | 100.0 ± 0.0 | 12.9 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 16.0 |
-| reverse | ALiBi | 1 | 100.0 ± 0.0 | 30.9 ± 0.0 | 0.4 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 16.0 |
+| Task | Encoding | Seeds | n = 1–16 | n = 16 | n = 17 | n = 18 | n = 20 | n = 24 | Longest n ≥ 90% |
+|---|---|---|---|---|---|---|---|---|---|
+| copy | NoPE | 3 | 96.5 ± 1.1 | 87.0 ± 5.6 | 74.0 ± 8.3 | 46.4 ± 8.2 | 3.0 ± 0.9 | 0.0 ± 0.0 | 15.0 |
+| copy | Sinusoidal | 3 | 96.7 ± 1.9 | 85.0 ± 4.9 | 65.8 ± 7.5 | 29.2 ± 10.7 | 1.6 ± 1.7 | 0.0 ± 0.0 | 14.0 |
+| copy | RoPE | 3 | 100.0 ± 0.0 | 100.0 ± 0.0 | 21.2 ± 17.7 | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 16.0 |
+| copy | ALiBi | 3 | 100.0 ± 0.0 | 100.0 ± 0.0 | 91.8 ± 5.2 | 31.9 ± 25.9 | 0.0 ± 0.0 | 0.0 ± 0.0 | 16.7 |
+| reverse | NoPE | 3 | 94.7 ± 3.6 | 83.1 ± 11.9 | 76.6 ± 17.1 | 57.9 ± 16.3 | 10.0 ± 5.3 | 0.0 ± 0.0 | 12.3 |
+| reverse | Sinusoidal | 3 | 99.3 ± 1.0 | 97.4 ± 3.7 | 93.1 ± 9.5 | 73.7 ± 15.8 | 3.9 ± 3.9 | 0.0 ± 0.0 | 17.0 |
+| reverse | RoPE | 3 | 100.0 ± 0.0 | 100.0 ± 0.0 | 36.6 ± 43.0 | 1.0 ± 1.5 | 0.0 ± 0.0 | 0.0 ± 0.0 | 16.3 |
+| reverse | ALiBi | 3 | 99.9 ± 0.1 | 99.1 ± 1.0 | 33.5 ± 22.7 | 0.4 ± 0.3 | 0.0 ± 0.0 | 0.0 ± 0.0 | 16.0 |
 
 ### What the model attends to
 
 ![Attention of the best pointer head on the reverse task](results/attention_reverse.png)
 
 For each encoding, the head that puts the most attention on the input symbol it has to
-output next, at the longest training length (n = 16) and at twice that (n = 32).
+output next, at the longest training length (n = 16) and at twice that (n = 32), for the seed-0 models.
 At n = 16, NoPE, RoPE and ALiBi show a clean anti-diagonal pointer; sinusoidal's is smeared over the middle of the sequence. At n = 32 the NoPE and sinusoidal heads largely keep that pointer for input positions inside the trained range (roughly the first 16) and smear beyond it; the RoPE pointer is gone entirely; and the ALiBi head still produces a diagonal, but at the wrong offset, stalling around input position 4–5. Each heatmap shows one example; the on-target score in each title averages 64.
 
 ## Comparison with the paper
 
-- **Agrees: RoPE extrapolates poorly.** The paper finds Rotary behaves more like absolute encodings than other relative schemes. Here it has the sharpest cliff of the four on both tasks.
-- **Partly agrees: NoPE.** The paper ranks NoPE best overall. Here NoPE has the most gradual decline and the longest tail, but that decline begins inside the training range, it trails just past training (sinusoidal leads on reverse and ALiBi on copy at n = 17–18), and it only leads or ties from n = 19 on, where every model is already at or below about 20%. NoPE also fit the training lengths less completely (see below).
-- **Mixed: ALiBi.** Poor on reverse, as in the paper, but the strongest encoding one or two steps past the training length on copy, where every output's source token is the same distance back within a sequence, a pattern a distance-based bias can encode directly.
+- **Agrees: RoPE extrapolates poorly.** RoPE has the sharpest cliff of the four on copy and ties ALiBi for it on reverse, consistent with the paper's finding that the popular relative schemes (RoPE, ALiBi) generalize poorly.
+- **Partly agrees: NoPE.** The paper ranks NoPE best overall. Here NoPE is the best encoding at n = 19–20 on both tasks and has the longest tail, but by then every model is below 30%, and NoPE is the weakest model inside the training range.
+- **Disagrees: sinusoidal.** The paper finds absolute encodings generalize poorly. Here sinusoidal is the best encoding on reverse one and two tokens past training. Its table at n = 17 (93.1 ± 9.5%) is well clear of RoPE and ALiBi (about 35%).
+- **Mixed: ALiBi.** Poor on reverse, as in the paper, but the best encoding just past training on copy, where every output's source token is the same distance back within a sequence: a pattern a distance-based bias can encode directly.
 - **Scale.** The paper trains much larger models on many more tasks, so these runs test whether its qualitative ranking shows up at small scale, not its exact numbers.
 
 ## Limitations
@@ -63,19 +64,20 @@ At n = 16, NoPE, RoPE and ALiBi show a clean anti-diagonal pointer; sinusoidal's
 - **Scale.** About 150k parameters and 3,000 steps, against the paper's much larger
   models. The machine was shared with other training jobs, so the model and step budget
   were cut to fit.
-- **One seed.** Each configuration was trained once, so differences of a few points are
-  within run-to-run noise.
+- **Three seeds.** Variance is high right at the boundary: RoPE on reverse at n = 17 is
+  36.6 ± 43.0%, so rankings at a single length can flip between seeds.
 - **Two tasks.** Copy and reverse only; the paper also covers arithmetic and other
   reasoning tasks.
-- **In-distribution bar.** Two of the eight runs miss the 95% in-distribution bar: copy with sinusoidal (94.1%) and reverse with NoPE (92.2%). Their curves are shown anyway; some of their gradual decline past n = 16 may come from not fully fitting the training lengths rather than from better generalization. Copy with NoPE passes the bar on average (95.8%) but scores 82.4% at n = 16, so the same caveat applies to it.
+- **In-distribution bar.** Three of the 24 runs miss the 95% in-distribution bar: copy with sinusoidal, seed 0 (94.1%), and reverse with NoPE, seeds 0 and 1 (92.2% and 92.1%). NoPE also scores well below its average at n = 16 (87.0% on copy, 83.1% on reverse), so part of its gradual decline past n = 16 comes from not fully fitting the longest training lengths rather than from better generalization.
 
 ## Reproduce
 
 ```bash
 uv sync                                                    # Python 3.12, CPU PyTorch
-uv run pytest                                              # 61 tests
-uv run python -m scripts.sweep --seeds 0 --steps 3000      # results/runs/*.json
+uv run pytest                                              # 64 tests
+uv run python -m scripts.sweep --seeds 0 1 2 --steps 3000  # results/runs/*.json
 uv run python -m scripts.plot                              # figures + results/summary.md
+uv run python -m scripts.export_web                        # results/web/study.json for the website
 ```
 
 A single run: `uv run python -m transformer.train --task reverse --pos-encoding rope --seed 0`.
