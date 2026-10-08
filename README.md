@@ -9,7 +9,7 @@ on a laptop CPU.
 **Question:** a decoder-only Transformer is trained on sequences of length ≤ 16. How well
 does it handle longer sequences, depending on how it encodes position?
 
-**Result:** no encoding generalizes far. Across 3 seeds, every model is at 0% exact match by length 24, 1.5× the longest training length, but **NoPE** (no positional encoding) lasts longest. It is the best encoding on both tasks at n = 18–20 (81% on copy and 87% on reverse at n = 18), still at 37% on reverse at n = 20, and the only one above zero at n = 22, even though it is the weakest model on reverse inside the training range (92% at n = 16). **RoPE** breaks first: 100% at n = 16, then 25% on copy one token later and near zero by n = 19. **ALiBi** depends on the task: the best encoding on copy at n = 17 (99%) but at 57% on reverse and near 0% one token later. **Sinusoidal** holds up just past training on reverse (95% at n = 17, 83% at n = 18) before falling off.
+**Result:** no encoding generalizes far. Across 3 seeds, every model is at 0% exact match by length 24, 1.5× the longest training length, but **NoPE** (no positional encoding) lasts longest. It is the best encoding on both tasks at n = 18–20 (81% on copy and 87% on reverse at n = 18), still at 37% on reverse at n = 20, and the only one above zero at n = 22, even though it is the weakest model on reverse inside the training range (97% averaged over n = 1–16, 92% at n = 16). **RoPE** breaks first: 100% at n = 16, then 25% on copy one token later and near zero by n = 19. **ALiBi** depends on the task: the best encoding on copy at n = 17 (99%) but at 57% on reverse and near 0% one token later. **Sinusoidal** holds up just past training on reverse (95% at n = 17, 83% at n = 18) before falling off.
 
 ![Exact match vs. sequence length](results/length_generalization.png)
 
@@ -51,7 +51,7 @@ Exact match (%) at each length, mean ± std over 3 seeds, trained on n = 1–16 
 
 For each encoding, the head that puts the most attention on the input symbol it has to
 output next, at the longest training length (n = 16) and at twice that (n = 32), for the seed-0 models.
-At n = 16, RoPE and ALiBi show a clean anti-diagonal pointer; NoPE's and sinusoidal's blur over the middle of the sequence. At n = 32 the NoPE head keeps a sharp pointer for input positions up to about 20 and smears beyond it, and the sinusoidal head keeps a weaker one up to about 16; the RoPE pointer is gone entirely; and the ALiBi head still produces a diagonal, but at the wrong offset, stalling around input position 3. Each heatmap shows one example; the on-target score in each title averages 64.
+At n = 16, RoPE and ALiBi show a clean anti-diagonal pointer; NoPE's and sinusoidal's blur over the middle of the sequence. At n = 32 the NoPE head keeps a sharp pointer for input positions up to about 20 and smears beyond it, and the sinusoidal head keeps a weaker one up to about 16; the RoPE pointer is gone entirely; and the ALiBi head still produces a diagonal, but at the wrong offset, stalling around input position 3. Each heatmap shows one example; the on-target score in each title is averaged over 64 sequences.
 
 ## Comparison with the paper
 
@@ -70,7 +70,9 @@ At n = 16, RoPE and ALiBi show a clean anti-diagonal pointer; NoPE's and sinusoi
 - **Training steps.** The grid was first run at 3,000 steps, where NoPE on reverse
   averaged 94.7% in-distribution exact match, under the 95% bar, so every run was
   retrained at 5,000 steps. The extra steps mostly helped NoPE past the training length
-  (57.9% → 87.4% on reverse at n = 18); RoPE and ALiBi still collapse within two tokens of the training length.
+  (57.9% → 87.4% on reverse at n = 18); RoPE and ALiBi still collapse within two tokens
+  of the training length. The 3,000-step numbers are in
+  [`results/summary.md` at commit `e6c3307`](https://github.com/dpologdvinity/transformer/blob/e6c3307/results/summary.md).
 - **Three seeds.** Variance is high right at the boundary: RoPE on reverse at n = 17 is
   51.0 ± 40.7%, so rankings at a single length can flip between seeds.
 - **Two tasks.** Copy and reverse only; the paper also covers arithmetic and other
