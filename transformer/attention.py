@@ -76,7 +76,7 @@ class MultiHeadAttention(nn.Module):
         x = x.view(batch_size, seq_len, self.num_heads, self.d_k)
         return x.transpose(1, 2)  # (B, num_heads, seq_len, d_k)
 
-    def forward(self, x_q, x_k, x_v, mask=None, bias=None):
+    def forward(self, x_q, x_k, x_v, mask=None, bias=None, kv_cache=None, position=0):
         """
         A flexible forward pass.
         :param x_q: Input for Queries, shape (batch_size, seq_len_q, d_model)
@@ -84,6 +84,8 @@ class MultiHeadAttention(nn.Module):
         :param x_v: Input for Values, shape (batch_size, seq_len_v, d_model)
         :param mask: Optional mask
         :param bias: Optional additive score bias
+        :param kv_cache: Optional dict holding this layer's past keys/values; extended in place
+        :param position: Position of the first query token (for RoPE with a KV cache)
         :return: Output, shape (batch_size, seq_len_q, d_model)
 
         - For Self-Attention: x_q, x_k, x_v will be the SAME tensor.
@@ -104,8 +106,15 @@ class MultiHeadAttention(nn.Module):
 
         # 2b. Rotate Q and K by position (RoPE), if enabled
         if self.rotary is not None:
-            Q = self.rotary(Q)
-            K = self.rotary(K)
+            Q = self.rotary(Q, offset=position)
+            K = self.rotary(K, offset=position)
+
+        # 2c. Prepend cached keys/values from earlier decoding steps
+        if kv_cache is not None:
+            if "k" in kv_cache:
+                K = torch.cat([kv_cache["k"], K], dim=2)
+                V = torch.cat([kv_cache["v"], V], dim=2)
+            kv_cache["k"], kv_cache["v"] = K, V
 
         # 3. Attention
         context_vector, weights = scaled_dot_product_attention(Q, K, V, mask, bias)

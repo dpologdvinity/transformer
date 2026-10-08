@@ -48,16 +48,18 @@ class TransformerEncoderBlock(nn.Module):
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
 
-    def forward(self, x, mask=None, bias=None):
+    def forward(self, x, mask=None, bias=None, kv_cache=None, position=0):
         """
         :param x: Input, shape (batch_size, seq_len, d_model)
         :param mask: Optional mask (e.g., for padding)
         :param bias: Optional additive attention bias (e.g., ALiBi)
+        :param kv_cache: Optional per-layer key/value cache (see DecoderOnlyLM)
+        :param position: Position of the first token in x
         :return: Output, shape (batch_size, seq_len, d_model)
         """
 
         # 1. MHA + "Add & Norm"
-        mha_output = self.mha(x, x, x, mask, bias)
+        mha_output = self.mha(x, x, x, mask, bias, kv_cache, position)
         x_with_mha = self.layernorm1(x + self.dropout1(mha_output))
 
         # 2. FFN + "Add & Norm"

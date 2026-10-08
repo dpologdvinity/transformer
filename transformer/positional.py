@@ -78,19 +78,21 @@ class RotaryEmbedding(nn.Module):
         self.register_buffer('cos', angles.cos(), persistent=False)
         self.register_buffer('sin', angles.sin(), persistent=False)
 
-    def forward(self, x):
+    def forward(self, x, offset=0):
         """
         :param x: Queries or keys, shape (batch_size, num_heads, seq_len, head_dim)
+        :param offset: Position of the first token in x (non-zero when decoding with a KV cache)
         :return: Rotated tensor, same shape
         """
         seq_len = x.size(-2)
-        if seq_len > self.max_seq_len:
-            raise ValueError(f"sequence length {seq_len} exceeds rotary max_seq_len {self.max_seq_len}")
+        end = offset + seq_len
+        if end > self.max_seq_len:
+            raise ValueError(f"sequence length {end} exceeds rotary max_seq_len {self.max_seq_len}")
 
         # "Rotate half": feature i is paired with feature i + head_dim/2
         x1, x2 = x.chunk(2, dim=-1)
         rotated = torch.cat([-x2, x1], dim=-1)
-        return x * self.cos[:seq_len] + rotated * self.sin[:seq_len]
+        return x * self.cos[offset:end] + rotated * self.sin[offset:end]
 
 
 def alibi_slopes(num_heads):
