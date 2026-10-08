@@ -65,7 +65,8 @@ def plot_length_curves(runs, out_path, train_max_len=16, max_len=32):
             ax.fill_between(lengths, [min(v) for v in per_length], [max(v) for v in per_length],
                             color=COLORS[pe], alpha=0.15, linewidth=0)
         ax.axvline(train_max_len, color="gray", linestyle="--", linewidth=1)
-        ax.text(train_max_len + 0.5, 0.03, "longest training length", color="gray", fontsize=8)
+        ax.text(train_max_len - 0.4, 0.05, "longest training length", color="gray", fontsize=8,
+                rotation=90, ha="right", va="bottom")
         ax.set_title(task.capitalize())
         ax.set_xlabel("Sequence length n")
         ax.set_ylim(-0.02, 1.02)
