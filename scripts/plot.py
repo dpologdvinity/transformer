@@ -47,7 +47,7 @@ def longest_solved_length(run, threshold=0.9):
     return n
 
 
-def plot_length_curves(runs, out_path, train_max_len=16):
+def plot_length_curves(runs, out_path, train_max_len=16, max_len=32):
     groups = group_runs(runs)
     fig, axes = plt.subplots(1, len(TASKS), figsize=(11, 4), sharey=True)
     for ax, task in zip(axes, TASKS, strict=True):
@@ -65,11 +65,15 @@ def plot_length_curves(runs, out_path, train_max_len=16):
         ax.set_title(task.capitalize())
         ax.set_xlabel("Sequence length n")
         ax.set_ylim(-0.02, 1.02)
+        ax.set_xlim(0, max_len)
         ax.grid(alpha=0.3)
     axes[0].set_ylabel("Exact match")
     axes[0].legend(loc="upper right")
     seeds = max(len(g) for g in groups.values())
-    fig.suptitle(f"Length generalization by positional encoding (line: mean of {seeds} seeds, band: min–max)")
+    title = "Length generalization by positional encoding"
+    if seeds > 1:
+        title += f" (line: mean of {seeds} seeds, band: min–max)"
+    fig.suptitle(title)
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
@@ -79,7 +83,7 @@ def _mean_std(values):
     return f"{100 * statistics.mean(values):.1f} ± {100 * statistics.pstdev(values):.1f}"
 
 
-def summary_table(runs, report_lengths=(24, 32, 48)):
+def summary_table(runs, report_lengths=(17, 18, 20, 24)):
     """ Markdown table of exact match (%) as mean ± std across seeds. """
     groups = group_runs(runs)
     header = ["Task", "Encoding", "Seeds", "n = 1–16"] + [f"n = {n}" for n in report_lengths] + ["Longest n ≥ 90%"]
