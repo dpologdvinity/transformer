@@ -177,7 +177,8 @@ def main():
     plot_length_curves(runs, out / "length_generalization.png")
     plot_attention(runs, args.checkpoints, out / "attention_reverse.png")
 
-    summary = ["# Results", "", "Exact match (%) on sequences of length n, mean ± population standard deviation across seeds.",
+    summary = ["# Results", "",
+               "Exact match (%) on sequences of length n, mean ± population standard deviation across seeds.",
                "Models were trained on n = 1–16.", "", summary_table(runs), ""]
     failing = below_validity_bar(runs)
     summary.append(f"Runs below {VALIDITY_BAR:.0%} in-distribution exact match: "
