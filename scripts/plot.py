@@ -89,7 +89,7 @@ def _mean_std(values):
 
 
 def summary_table(runs, report_lengths=(16, 17, 18, 20, 24)):
-    """ Markdown table of exact match (%) as mean ± std across seeds. """
+    """ Markdown table of exact match (%) as mean ± population std across seeds. """
     groups = group_runs(runs)
     header = ["Task", "Encoding", "Seeds", "n = 1–16"] + [f"n = {n}" for n in report_lengths] + ["Longest n ≥ 90%"]
     lines = ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
@@ -177,7 +177,7 @@ def main():
     plot_length_curves(runs, out / "length_generalization.png")
     plot_attention(runs, args.checkpoints, out / "attention_reverse.png")
 
-    summary = ["# Results", "", "Exact match (%) on sequences of length n, mean ± std across seeds.",
+    summary = ["# Results", "", "Exact match (%) on sequences of length n, mean ± population standard deviation across seeds.",
                "Models were trained on n = 1–16.", "", summary_table(runs), ""]
     failing = below_validity_bar(runs)
     summary.append(f"Runs below {VALIDITY_BAR:.0%} in-distribution exact match: "

@@ -1,6 +1,6 @@
 # Results
 
-Exact match (%) on sequences of length n, mean ± std across seeds.
+Exact match (%) on sequences of length n, mean ± population standard deviation across seeds.
 Models were trained on n = 1–16.
 
 | Task | Encoding | Seeds | n = 1–16 | n = 16 | n = 17 | n = 18 | n = 20 | n = 24 | Longest n ≥ 90% |

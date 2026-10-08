@@ -32,7 +32,7 @@ step-by-step generation.
 
 ## Results
 
-Exact match (%) at each length, mean ± std over 3 seeds, trained on n = 1–16 (from [`results/summary.md`](results/summary.md)). "Longest n ≥ 90%" is the largest n such that every length up to it scores at least 90%, averaged over seeds.
+Exact match (%) at each length, mean ± population standard deviation over 3 seeds, trained on n = 1–16 (from [`results/summary.md`](results/summary.md)). "Longest n ≥ 90%" is the largest n such that every length up to it scores at least 90%, averaged over seeds.
 
 | Task | Encoding | Seeds | n = 1–16 | n = 16 | n = 17 | n = 18 | n = 20 | n = 24 | Longest n ≥ 90% |
 |---|---|---|---|---|---|---|---|---|---|
