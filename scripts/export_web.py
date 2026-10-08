@@ -20,7 +20,7 @@ META_KEYS = ("train_min_len", "train_max_len", "eval_max_len", "eval_samples", "
 
 
 def _round(x):
-    return round(x, 4)
+    return round(x, 6)
 
 
 def _curve(group):
