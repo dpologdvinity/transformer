@@ -1,5 +1,7 @@
 # Positional Encodings and Length Generalization
 
+[![tests](https://github.com/dpologdvinity/transformer/actions/workflows/tests.yml/badge.svg)](https://github.com/dpologdvinity/transformer/actions/workflows/tests.yml)
+
 A Transformer built from PyTorch primitives, used to run a small-scale replication of
 [Kazemnejad et al., *The Impact of Positional Encoding on Length Generalization in Transformers* (NeurIPS 2023)](https://arxiv.org/abs/2305.19466)
 on a laptop CPU.
