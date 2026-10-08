@@ -5,8 +5,10 @@ Finished runs are skipped, so an interrupted sweep resumes by running it again.
     uv run python -m scripts.sweep --workers 6 --threads 1
 """
 import argparse
+import json
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from dataclasses import asdict
 from pathlib import Path
 
 import torch
@@ -23,8 +25,19 @@ def build_grid(seeds=(0, 1, 2), **overrides):
 
 
 def pending(configs, out_dir):
-    """ Configs without a finished <run_name>.json (a leftover .json.tmp does not count). """
-    return [c for c in configs if not (Path(out_dir) / f"{run_name(c)}.json").exists()]
+    """
+    Configs without a finished <run_name>.json (a leftover .json.tmp does not count).
+    Raises if a finished run was trained with a different config, so a resumed sweep
+    never mixes settings.
+    """
+    todo = []
+    for c in configs:
+        path = Path(out_dir) / f"{run_name(c)}.json"
+        if not path.exists():
+            todo.append(c)
+        elif json.loads(path.read_text())["config"] != asdict(c):
+            raise ValueError(f"{path} was trained with a different config; move it aside to rerun")
+    return todo
 
 
 def run_one(config, out_dir, checkpoint_dir, threads):

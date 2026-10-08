@@ -28,10 +28,14 @@ def load_runs(runs_dir):
 
 
 def group_runs(runs):
-    """ {(task, pos_encoding): [run, ...]} """
+    """ {(task, pos_encoding): [run, ...]}. Runs in a group may differ only by seed. """
     groups = {}
     for r in runs:
         groups.setdefault((r["config"]["task"], r["config"]["pos_encoding"]), []).append(r)
+    for (task, pe), group in groups.items():
+        settings = [{k: v for k, v in r["config"].items() if k != "seed"} for r in group]
+        if any(s != settings[0] for s in settings):
+            raise ValueError(f"{task}/{pe} runs differ in more than the seed; refusing to average them")
     return groups
 
 
@@ -83,7 +87,7 @@ def _mean_std(values):
     return f"{100 * statistics.mean(values):.1f} ± {100 * statistics.pstdev(values):.1f}"
 
 
-def summary_table(runs, report_lengths=(17, 18, 20, 24)):
+def summary_table(runs, report_lengths=(16, 17, 18, 20, 24)):
     """ Markdown table of exact match (%) as mean ± std across seeds. """
     groups = group_runs(runs)
     header = ["Task", "Encoding", "Seeds", "n = 1–16"] + [f"n = {n}" for n in report_lengths] + ["Longest n ≥ 90%"]

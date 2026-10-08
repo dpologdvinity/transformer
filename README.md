@@ -7,7 +7,7 @@ on a laptop CPU.
 **Question:** a decoder-only Transformer is trained on sequences of length ≤ 16. How well
 does it handle longer sequences, depending on how it encodes position?
 
-**Result:** no encoding generalizes far. Every model is at 0% exact match by length 23, less than 1.5× the longest training length. How they fail differs: **RoPE** collapses immediately (100% at n = 16, then 43% on copy and 13% on reverse at n = 17, 0% at n = 18); **ALiBi** holds best one step out on copy (99% at n = 17) but not on reverse (31%); **NoPE** degrades the most gradually and keeps a non-zero tail out to n = 22.
+**Result:** no encoding generalizes far. Every model is at 0% exact match by length 23, less than 1.5× the longest training length. How they fail differs: **RoPE** collapses immediately (100% at n = 16, then 43% on copy and 13% on reverse at n = 17, 0% at n = 18); **ALiBi** holds best one step out on copy (99% at n = 17) but not on reverse (31%); **NoPE** starts slipping earliest (already 82% on copy and 70% on reverse at n = 16) but declines the most slowly, keeping a non-zero tail out to n = 22.
 
 ![Exact match vs. sequence length](results/length_generalization.png)
 
@@ -49,12 +49,12 @@ Exact match (%) at each length, trained on n = 1–16 (one seed, so ± is 0; fro
 
 For each encoding, the head that puts the most attention on the input symbol it has to
 output next, at the longest training length (n = 16) and at twice that (n = 32).
-At n = 16 every encoding has learned a clean anti-diagonal pointer. At n = 32 the NoPE and sinusoidal heads largely keep that pointer for input positions inside the trained range (roughly the first 16) and smear beyond it; the RoPE pointer is gone entirely; and the ALiBi head still produces a diagonal, but at the wrong offset, stalling around input position 4–5.
+At n = 16, NoPE, RoPE and ALiBi show a clean anti-diagonal pointer; sinusoidal's is smeared over the middle of the sequence. At n = 32 the NoPE and sinusoidal heads largely keep that pointer for input positions inside the trained range (roughly the first 16) and smear beyond it; the RoPE pointer is gone entirely; and the ALiBi head still produces a diagonal, but at the wrong offset, stalling around input position 4–5. Each heatmap shows one example; the on-target score in each title averages 64.
 
 ## Comparison with the paper
 
 - **Agrees: RoPE extrapolates poorly.** The paper finds Rotary behaves more like absolute encodings than other relative schemes. Here it has the sharpest cliff of the four on both tasks.
-- **Partly agrees: NoPE.** The paper ranks NoPE best overall. Here NoPE has the most gradual decline and the longest tail, but it trails just past training (sinusoidal leads on reverse and ALiBi on copy at n = 17–18) and only leads from n = 19 on, where every model is already at or below about 20%. NoPE also fit the training lengths less completely (see below).
+- **Partly agrees: NoPE.** The paper ranks NoPE best overall. Here NoPE has the most gradual decline and the longest tail, but that decline begins inside the training range, it trails just past training (sinusoidal leads on reverse and ALiBi on copy at n = 17–18), and it only leads or ties from n = 19 on, where every model is already at or below about 20%. NoPE also fit the training lengths less completely (see below).
 - **Mixed: ALiBi.** Poor on reverse, as in the paper, but the strongest encoding one or two steps past the training length on copy, where every output's source token is the same distance back within a sequence, a pattern a distance-based bias can encode directly.
 - **Scale.** The paper trains much larger models on many more tasks, so these runs test whether its qualitative ranking shows up at small scale, not its exact numbers.
 
@@ -67,13 +67,13 @@ At n = 16 every encoding has learned a clean anti-diagonal pointer. At n = 32 th
   within run-to-run noise.
 - **Two tasks.** Copy and reverse only; the paper also covers arithmetic and other
   reasoning tasks.
-- **In-distribution bar.** Two of the eight runs miss the 95% in-distribution bar: copy with sinusoidal (94.1%) and reverse with NoPE (92.2%). Their curves are shown anyway; some of their gradual decline past n = 16 may come from not fully fitting the training lengths rather than from better generalization.
+- **In-distribution bar.** Two of the eight runs miss the 95% in-distribution bar: copy with sinusoidal (94.1%) and reverse with NoPE (92.2%). Their curves are shown anyway; some of their gradual decline past n = 16 may come from not fully fitting the training lengths rather than from better generalization. Copy with NoPE passes the bar on average (95.8%) but scores 82.4% at n = 16, so the same caveat applies to it.
 
 ## Reproduce
 
 ```bash
 uv sync                                                    # Python 3.12, CPU PyTorch
-uv run pytest                                              # 58 tests
+uv run pytest                                              # 61 tests
 uv run python -m scripts.sweep --seeds 0 --steps 3000      # results/runs/*.json
 uv run python -m scripts.plot                              # figures + results/summary.md
 ```
