@@ -71,14 +71,39 @@ At n = 16, NoPE, RoPE and ALiBi show a clean anti-diagonal pointer; sinusoidal's
   reasoning tasks.
 - **In-distribution bar.** Three of the 24 runs miss the 95% in-distribution bar: copy with sinusoidal, seed 0 (94.1%), and reverse with NoPE, seeds 0 and 1 (92.2% and 92.1%). NoPE also scores well below its average at n = 16 (87.0% on copy, 83.1% on reverse), so part of its gradual decline past n = 16 comes from not fully fitting the longest training lengths rather than from better generalization.
 
+## Inference: KV cache
+
+`DecoderOnlyLM.generate` keeps each layer's keys and values, so every decoding step feeds only
+the newest token instead of re-running the whole sequence. RoPE, ALiBi and the sinusoidal table
+are offset by the cache length, and a test checks that cached and uncached generation produce
+identical tokens (and logits within 1e-5) for every encoding.
+
+Greedy generation time for the study's model (d_model 64, 3 layers), 16-token prompt, one CPU
+thread, median of 3 runs ([`results/kv_cache.json`](results/kv_cache.json)):
+
+| Batch | New tokens | Cached | Uncached | Speedup |
+|---|---|---|---|---|
+| 1 | 32 | 0.40 s | 0.75 s | 1.9× |
+| 1 | 64 | 0.92 s | 1.26 s | 1.4× |
+| 1 | 128 | 1.77 s | 3.36 s | 1.9× |
+| 64 | 32 | 1.04 s | 6.01 s | 5.8× |
+| 64 | 64 | 2.21 s | 22.46 s | 10.2× |
+| 64 | 128 | 4.91 s | 100.95 s | 20.6× |
+
+Without the cache, total work grows with the square of the generated length, so the gap widens
+as sequences get longer. At batch size 1 this small model is dominated by per-step overhead, so
+the gain is modest. Timings were taken on a laptop shared with other jobs, so treat them as
+approximate.
+
 ## Reproduce
 
 ```bash
 uv sync                                                    # Python 3.12, CPU PyTorch
-uv run pytest                                              # 64 tests
+uv run pytest                                              # 78 tests
 uv run python -m scripts.sweep --seeds 0 1 2 --steps 3000  # results/runs/*.json
 uv run python -m scripts.plot                              # figures + results/summary.md
 uv run python -m scripts.export_web                        # results/web/study.json for the website
+uv run python -m scripts.bench_kv_cache                    # results/kv_cache.json
 ```
 
 A single run: `uv run python -m transformer.train --task reverse --pos-encoding rope --seed 0`.
@@ -91,12 +116,14 @@ transformer/
   positional.py   sinusoidal table, RoPE, ALiBi
   blocks.py       feed-forward, encoder and decoder blocks, causal and padding masks
   seq2seq.py      the original encoder-decoder Transformer and greedy decoding
-  decoder_lm.py   decoder-only model with a selectable positional encoding
+  decoder_lm.py   decoder-only model with a selectable positional encoding and a KV cache
   tasks.py        copy / reverse data
   train.py        training loop, per-length evaluation, single-run CLI
 scripts/
   sweep.py        runs the grid in parallel, resumable
   plot.py         figures and summary table
+  export_web.py   JSON for the interactive results page
+  bench_kv_cache.py  cached vs uncached generation timing
 tests/            pytest suite
 results/          per-run JSON, figures, summary.md
 ```
