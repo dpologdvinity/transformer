@@ -53,11 +53,12 @@ At n = 16, NoPE, RoPE and ALiBi show a clean anti-diagonal pointer; sinusoidal's
 
 ## Comparison with the paper
 
-- **Agrees: RoPE extrapolates poorly.** RoPE has the sharpest cliff of the four on copy and ties ALiBi for it on reverse, consistent with the paper's finding that the popular relative schemes (RoPE, ALiBi) generalize poorly.
-- **Partly agrees: NoPE.** The paper ranks NoPE best overall. Here NoPE is the best encoding at n = 19–20 on both tasks and has the longest tail, but by then every model is below 30%, and NoPE is the weakest model inside the training range.
-- **Disagrees: sinusoidal.** The paper finds absolute encodings generalize poorly. Here sinusoidal is the best encoding on reverse one and two tokens past training. Its table at n = 17 (93.1 ± 9.5%) is well clear of RoPE and ALiBi (about 35%).
-- **Mixed: ALiBi.** Poor on reverse, as in the paper, but the best encoding just past training on copy, where every output's source token is the same distance back within a sequence: a pattern a distance-based bias can encode directly.
-- **Scale.** The paper trains much larger models on many more tasks, so these runs test whether its qualitative ranking shows up at small scale, not its exact numbers.
+- **Agrees: RoPE extrapolates poorly.** RoPE has the sharpest cliff of the four on copy and ties ALiBi for it on reverse. The paper groups RoPE (Rotary) and ALiBi with absolute encodings as poorly suited to length generalization, and notes that Rotary "performs more similarly to APE than to other relative schemes."
+- **Partly agrees: NoPE.** The paper finds NoPE outperforms every explicit encoding, on par with or ahead of T5's relative bias. Here NoPE is the best encoding at n = 19–20 on both tasks and has the longest tail, but by then every model is below 30%, and NoPE is the weakest model inside the training range.
+- **Not isolated by the paper: sinusoidal just past training.** The paper finds its absolute encoding (also sinusoidal) generalizes poorly over test lengths up to twice the training length. Here sinusoidal is the best encoding on reverse one and two tokens past training (93.1 ± 9.5% at n = 17, well clear of RoPE and ALiBi at about 35%), a narrow window that aggregate results do not separate out.
+- **ALiBi.** Poor on reverse here; the paper reports that ALiBi "underperforms with respect to T5's Relative Bias in most cases." On copy, ALiBi is the best encoding just past training, where every output's source token is the same distance back within a sequence: a pattern a distance-based bias can encode directly.
+- **Not tested here: T5's relative bias**, the strongest explicit encoding in the paper.
+- **Scale and setup.** The paper trains models with about 107M weights on ten tasks (copy and reverse among them), with training length 20, test lengths up to 40 and three seeds. This study uses about 150k parameters, two tasks and training length 16, so it tests whether the qualitative ranking shows up at small scale, not the exact numbers.
 
 ## Limitations
 
