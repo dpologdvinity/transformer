@@ -1,0 +1,60 @@
+{
+  "model": {
+    "d_model": 64,
+    "num_heads": 4,
+    "num_layers": 3,
+    "d_ff": 256
+  },
+  "threads": 1,
+  "reps": 3,
+  "rows": [
+    {
+      "prompt_len": 16,
+      "new_tokens": 32,
+      "batch_size": 1,
+      "cached_s": 0.3975,
+      "uncached_s": 0.7549,
+      "speedup": 1.9
+    },
+    {
+      "prompt_len": 16,
+      "new_tokens": 64,
+      "batch_size": 1,
+      "cached_s": 0.9163,
+      "uncached_s": 1.2587,
+      "speedup": 1.37
+    },
+    {
+      "prompt_len": 16,
+      "new_tokens": 128,
+      "batch_size": 1,
+      "cached_s": 1.7737,
+      "uncached_s": 3.3648,
+      "speedup": 1.9
+    },
+    {
+      "prompt_len": 16,
+      "new_tokens": 32,
+      "batch_size": 64,
+      "cached_s": 1.0381,
+      "uncached_s": 6.0129,
+      "speedup": 5.79
+    },
+    {
+      "prompt_len": 16,
+      "new_tokens": 64,
+      "batch_size": 64,
+      "cached_s": 2.2121,
+      "uncached_s": 22.4607,
+      "speedup": 10.15
+    },
+    {
+      "prompt_len": 16,
+      "new_tokens": 128,
+      "batch_size": 64,
+      "cached_s": 4.9092,
+      "uncached_s": 100.9534,
+      "speedup": 20.56
+    }
+  ]
+}
