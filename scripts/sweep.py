@@ -4,6 +4,7 @@ Finished runs are skipped, so an interrupted sweep resumes by running it again.
 
     uv run python -m scripts.sweep --workers 6 --threads 1
 """
+
 import argparse
 import json
 import time
@@ -19,9 +20,8 @@ from transformer.train import RunConfig, in_distribution_exact_match, run, run_n
 
 
 def build_grid(seeds=(0, 1, 2), **overrides):
-    """ Seed-major order, so a sweep cut short still covers every (task, encoding). """
-    return [RunConfig(task, pe, seed, **overrides)
-            for seed in seeds for task in TASKS for pe in POSITIONAL_ENCODINGS]
+    """Seed-major order, so a sweep cut short still covers every (task, encoding)."""
+    return [RunConfig(task, pe, seed, **overrides) for seed in seeds for task in TASKS for pe in POSITIONAL_ENCODINGS]
 
 
 def pending(configs, out_dir):

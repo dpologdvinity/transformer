@@ -4,6 +4,7 @@ Export the study's results as one JSON file for the website's interactive page.
     uv run python -m scripts.export_web [--runs results/runs] [--checkpoints checkpoints]
         [--kv-cache results/kv_cache.json] [--out results/web/study.json]
 """
+
 import argparse
 import json
 import statistics
@@ -15,8 +16,19 @@ from scripts.plot import group_runs, load_model, load_runs, pointer_head
 from transformer.tasks import answer_query_positions
 from transformer.train import in_distribution_exact_match
 
-META_KEYS = ("train_min_len", "train_max_len", "eval_max_len", "eval_samples", "steps", "batch_size",
-             "d_model", "num_heads", "num_layers", "d_ff", "lr")
+META_KEYS = (
+    "train_min_len",
+    "train_max_len",
+    "eval_max_len",
+    "eval_samples",
+    "steps",
+    "batch_size",
+    "d_model",
+    "num_heads",
+    "num_layers",
+    "d_ff",
+    "lr",
+)
 
 
 def _round(x):
@@ -39,14 +51,18 @@ def _curve(group):
 
 @torch.no_grad()
 def _attention(run, checkpoint_dir, lengths, task="reverse"):
-    """ Best pointer head's attention (answer steps x input positions) for the first sample. """
+    """Best pointer head's attention (answer steps x input positions) for the first sample."""
     model = load_model(run, checkpoint_dir)
     maps = {}
     for n in lengths:
         layer, head, score = pointer_head(model, task, n)
-        weights = model.attention_maps()[layer][0, head][answer_query_positions(n)][:, 1:n + 1]
-        maps[str(n)] = {"layer": layer, "head": head, "score": _round(score),
-                        "weights": [[round(float(w), 3) for w in row] for row in weights]}
+        weights = model.attention_maps()[layer][0, head][answer_query_positions(n)][:, 1 : n + 1]
+        maps[str(n)] = {
+            "layer": layer,
+            "head": head,
+            "score": _round(score),
+            "weights": [[round(float(w), 3) for w in row] for row in weights],
+        }
     return maps
 
 

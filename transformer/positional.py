@@ -34,7 +34,7 @@ class TokenAndPositionalEmbedding(nn.Module):
         # We 'register_buffer' so 'pe' is part of the model's state,
         # but not a trainable parameter.
         # Shape (1, max_seq_len, d_model)
-        self.register_buffer('pe', sinusoidal_table(max_seq_len, d_model).unsqueeze(0))
+        self.register_buffer("pe", sinusoidal_table(max_seq_len, d_model).unsqueeze(0))
 
     def forward(self, x):
         """
@@ -46,7 +46,7 @@ class TokenAndPositionalEmbedding(nn.Module):
         seq_len = x.size(1)
 
         # 1. Get token embeddings from self.token_embed
-        token_embeddings = self.token_embed(x) # Shape (batch_size, seq_len, d_model)
+        token_embeddings = self.token_embed(x)  # Shape (batch_size, seq_len, d_model)
 
         # 2. Scale token embeddings (common practice)
         token_embeddings = token_embeddings * math.sqrt(self.d_model)
@@ -66,6 +66,7 @@ class RotaryEmbedding(nn.Module):
     position, so the score between a query and a key depends only on their offset.
     Applied to Q and K after the heads are split; it has no learnable parameters.
     """
+
     def __init__(self, head_dim, max_seq_len=256, base=10000.0):
         super(RotaryEmbedding, self).__init__()
         assert head_dim % 2 == 0, "head_dim must be even for rotary embeddings"
@@ -75,8 +76,8 @@ class RotaryEmbedding(nn.Module):
         inv_freq = base ** (-torch.arange(0, head_dim, 2).float() / head_dim)
         angles = torch.arange(max_seq_len).float().unsqueeze(1) * inv_freq  # (max_seq_len, head_dim/2)
         angles = torch.cat([angles, angles], dim=-1)  # (max_seq_len, head_dim)
-        self.register_buffer('cos', angles.cos(), persistent=False)
-        self.register_buffer('sin', angles.sin(), persistent=False)
+        self.register_buffer("cos", angles.cos(), persistent=False)
+        self.register_buffer("sin", angles.sin(), persistent=False)
 
     def forward(self, x, offset=0):
         """

@@ -16,7 +16,7 @@ def test_incremental_logits_match_full_forward(pe):
     full = model(tokens)
     cache = KVCache()
     first = model(tokens[:, :5], cache=cache)
-    steps = [model(tokens[:, t:t + 1], cache=cache) for t in range(5, 12)]
+    steps = [model(tokens[:, t : t + 1], cache=cache) for t in range(5, 12)]
     incremental = torch.cat([first, *steps], dim=1)
     assert cache.length == 12
     assert torch.allclose(full, incremental, atol=1e-5)

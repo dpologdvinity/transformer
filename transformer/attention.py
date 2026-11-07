@@ -32,7 +32,7 @@ def scaled_dot_product_attention(Q, K, V, mask=None, bias=None):
 
     # 5. Apply mask (if provided)
     if mask is not None:
-        scores = scores.masked_fill(mask == 0, float('-inf'))
+        scores = scores.masked_fill(mask == 0, float("-inf"))
 
     # 6. Apply softmax to get weights
     weights = F.softmax(scores, dim=-1)
@@ -47,6 +47,7 @@ class MultiHeadAttention(nn.Module):
     """
     Implements a flexible Multi-Head Attention module.
     """
+
     def __init__(self, d_model, num_heads, rotary=None):
         super(MultiHeadAttention, self).__init__()
         assert d_model % num_heads == 0, "d_model must be divisible by num_heads"

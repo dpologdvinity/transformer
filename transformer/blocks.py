@@ -6,7 +6,8 @@ from transformer.attention import MultiHeadAttention
 
 
 class PositionwiseFeedForward(nn.Module):
-    """ Implements the FFN(x) = ReLU(xW1 + b1)W2 + b2 """
+    """Implements the FFN(x) = ReLU(xW1 + b1)W2 + b2"""
+
     def __init__(self, d_model, d_ff, dropout=0.1):
         super(PositionwiseFeedForward, self).__init__()
         self.linear1 = nn.Linear(d_model, d_ff)
@@ -24,7 +25,7 @@ def create_causal_mask(seq_len):
     :return: A mask tensor of shape (1, 1, seq_len, seq_len)
     """
     mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
-    return (mask == 0).unsqueeze(0).unsqueeze(0) # Shape (1, 1, seq_len, seq_len)
+    return (mask == 0).unsqueeze(0).unsqueeze(0)  # Shape (1, 1, seq_len, seq_len)
 
 
 def create_padding_mask(seq, pad_idx=0):
@@ -37,7 +38,8 @@ def create_padding_mask(seq, pad_idx=0):
 
 
 class TransformerEncoderBlock(nn.Module):
-    """ Implements a single Transformer Encoder Block """
+    """Implements a single Transformer Encoder Block"""
+
     def __init__(self, d_model, num_heads, d_ff, dropout=0.1, rotary=None):
         super(TransformerEncoderBlock, self).__init__()
 
@@ -70,7 +72,8 @@ class TransformerEncoderBlock(nn.Module):
 
 
 class TransformerDecoderBlock(nn.Module):
-    """ Implements a single Transformer Decoder Block """
+    """Implements a single Transformer Decoder Block"""
+
     def __init__(self, d_model, num_heads, d_ff, dropout=0.1):
         super(TransformerDecoderBlock, self).__init__()
 

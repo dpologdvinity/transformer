@@ -3,6 +3,7 @@ Turn sweep results into figures and a summary table.
 
     uv run python -m scripts.plot [--runs results/runs] [--checkpoints checkpoints] [--out results]
 """
+
 import argparse
 import json
 import statistics
@@ -28,7 +29,7 @@ def load_runs(runs_dir):
 
 
 def group_runs(runs):
-    """ {(task, pos_encoding): [run, ...]}. Runs in a group may differ only by seed. """
+    """{(task, pos_encoding): [run, ...]}. Runs in a group may differ only by seed."""
     groups = {}
     for r in runs:
         groups.setdefault((r["config"]["task"], r["config"]["pos_encoding"]), []).append(r)
@@ -44,7 +45,7 @@ def exact_match(run, n):
 
 
 def longest_solved_length(run, threshold=0.9):
-    """ Largest n such that every length 1..n reaches the threshold. """
+    """Largest n such that every length 1..n reaches the threshold."""
     n = 0
     while str(n + 1) in run["eval"] and exact_match(run, n + 1) >= threshold:
         n += 1
@@ -62,11 +63,25 @@ def plot_length_curves(runs, out_path, train_max_len=16, max_len=32):
             lengths = sorted(int(n) for n in group[0]["eval"])
             per_length = [[exact_match(r, n) for r in group] for n in lengths]
             ax.plot(lengths, [statistics.mean(v) for v in per_length], color=COLORS[pe], label=LABELS[pe])
-            ax.fill_between(lengths, [min(v) for v in per_length], [max(v) for v in per_length],
-                            color=COLORS[pe], alpha=0.15, linewidth=0)
+            ax.fill_between(
+                lengths,
+                [min(v) for v in per_length],
+                [max(v) for v in per_length],
+                color=COLORS[pe],
+                alpha=0.15,
+                linewidth=0,
+            )
         ax.axvline(train_max_len, color="gray", linestyle="--", linewidth=1)
-        ax.text(train_max_len - 0.4, 0.05, "longest training length", color="gray", fontsize=8,
-                rotation=90, ha="right", va="bottom")
+        ax.text(
+            train_max_len - 0.4,
+            0.05,
+            "longest training length",
+            color="gray",
+            fontsize=8,
+            rotation=90,
+            ha="right",
+            va="bottom",
+        )
         ax.set_title(task.capitalize())
         ax.set_xlabel("Sequence length n")
         ax.set_ylim(-0.02, 1.02)
@@ -89,7 +104,7 @@ def _mean_std(values):
 
 
 def summary_table(runs, report_lengths=(16, 17, 18, 20, 24)):
-    """ Markdown table of exact match (%) as mean ± population std across seeds. """
+    """Markdown table of exact match (%) as mean ± population std across seeds."""
     groups = group_runs(runs)
     header = ["Task", "Encoding", "Seeds", "n = 1–16"] + [f"n = {n}" for n in report_lengths] + ["Longest n ≥ 90%"]
     lines = ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
@@ -137,10 +152,15 @@ def load_model(run, checkpoint_dir):
 
 
 def plot_attention(runs, checkpoint_dir, out_path, task="reverse", lengths=(16, 32), seed=0):
-    by_encoding = {r["config"]["pos_encoding"]: r for r in runs
-                   if r["config"]["task"] == task and r["config"]["seed"] == seed}
-    fig, axes = plt.subplots(len(POSITIONAL_ENCODINGS), len(lengths),
-                             figsize=(4.2 * len(lengths), 3.6 * len(POSITIONAL_ENCODINGS)), squeeze=False)
+    by_encoding = {
+        r["config"]["pos_encoding"]: r for r in runs if r["config"]["task"] == task and r["config"]["seed"] == seed
+    }
+    fig, axes = plt.subplots(
+        len(POSITIONAL_ENCODINGS),
+        len(lengths),
+        figsize=(4.2 * len(lengths), 3.6 * len(POSITIONAL_ENCODINGS)),
+        squeeze=False,
+    )
     for row, pe in enumerate(POSITIONAL_ENCODINGS):
         if pe not in by_encoding:
             for ax in axes[row]:
@@ -150,7 +170,7 @@ def plot_attention(runs, checkpoint_dir, out_path, task="reverse", lengths=(16, 
         for col, n in enumerate(lengths):
             layer, head, score = pointer_head(model, task, n)
             weights = model.attention_maps()[layer][0, head]  # first sample of the batch above
-            grid = weights[answer_query_positions(n)][:, 1:n + 1]
+            grid = weights[answer_query_positions(n)][:, 1 : n + 1]
             ax = axes[row, col]
             ax.imshow(grid, cmap="viridis", vmin=0, vmax=1, aspect="auto")
             ax.set_title(f"{LABELS[pe]}, n = {n}\nlayer {layer}, head {head}, on-target {score:.2f}", fontsize=9)
@@ -177,12 +197,21 @@ def main():
     plot_length_curves(runs, out / "length_generalization.png")
     plot_attention(runs, args.checkpoints, out / "attention_reverse.png")
 
-    summary = ["# Results", "",
-               "Exact match (%) on sequences of length n, mean ± population standard deviation across seeds.",
-               "Models were trained on n = 1–16.", "", summary_table(runs), ""]
+    summary = [
+        "# Results",
+        "",
+        "Exact match (%) on sequences of length n, mean ± population standard deviation across seeds.",
+        "Models were trained on n = 1–16.",
+        "",
+        summary_table(runs),
+        "",
+    ]
     failing = below_validity_bar(runs)
-    summary.append(f"Runs below {VALIDITY_BAR:.0%} in-distribution exact match: "
-                   + (", ".join(failing) if failing else "none") + ".")
+    summary.append(
+        f"Runs below {VALIDITY_BAR:.0%} in-distribution exact match: "
+        + (", ".join(failing) if failing else "none")
+        + "."
+    )
     (out / "summary.md").write_text("\n".join(summary) + "\n")
     print("\n".join(summary))
 

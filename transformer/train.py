@@ -3,6 +3,7 @@ Train one decoder-only model on one task, then measure accuracy at every test le
 
     uv run python -m transformer.train --task reverse --pos-encoding rope --seed 0
 """
+
 import argparse
 import json
 import math
@@ -47,8 +48,10 @@ class RunConfig:
         # A sequence of length n is fed as 2n + 2 tokens ([BOS, x, SEP, y] for teacher forcing)
         for name in ("train_max_len", "eval_max_len"):
             if 2 * getattr(self, name) + 2 > self.max_seq_len:
-                raise ValueError(f"{name}={getattr(self, name)} needs {2 * getattr(self, name) + 2} positions, "
-                                 f"more than max_seq_len={self.max_seq_len}")
+                raise ValueError(
+                    f"{name}={getattr(self, name)} needs {2 * getattr(self, name) + 2} positions, "
+                    f"more than max_seq_len={self.max_seq_len}"
+                )
 
 
 def run_name(config):
@@ -56,12 +59,20 @@ def run_name(config):
 
 
 def build_model(config):
-    return DecoderOnlyLM(VOCAB_SIZE, config.d_model, config.num_heads, config.num_layers,
-                         config.d_ff, config.pos_encoding, config.max_seq_len, config.dropout)
+    return DecoderOnlyLM(
+        VOCAB_SIZE,
+        config.d_model,
+        config.num_heads,
+        config.num_layers,
+        config.d_ff,
+        config.pos_encoding,
+        config.max_seq_len,
+        config.dropout,
+    )
 
 
 def lr_factor(config, step):
-    """ Linear warmup, then cosine decay to zero. """
+    """Linear warmup, then cosine decay to zero."""
     if step < config.warmup_steps:
         return (step + 1) / config.warmup_steps
     progress = (step - config.warmup_steps) / max(1, config.steps - config.warmup_steps)
@@ -116,7 +127,7 @@ def teacher_forced_correct(model, prompt, answer):
     :return: BoolTensor (batch_size, n + 1)
     """
     tokens = torch.cat([prompt, answer[:, :-1]], dim=1)
-    predictions = model(tokens)[:, prompt.size(1) - 1:].argmax(dim=-1)
+    predictions = model(tokens)[:, prompt.size(1) - 1 :].argmax(dim=-1)
     return predictions == answer
 
 
@@ -144,14 +155,14 @@ def evaluate_lengths(model, task, lengths, samples, batch_size=256):
 
 
 def in_distribution_exact_match(result):
-    """ Mean exact match over the training lengths, from a run's result dict. """
+    """Mean exact match over the training lengths, from a run's result dict."""
     config = result["config"]
     lengths = range(config["train_min_len"], config["train_max_len"] + 1)
     return sum(result["eval"][str(n)]["exact_match"] for n in lengths) / len(lengths)
 
 
 def run(config, out_dir, checkpoint_dir, verbose=False):
-    """ Train, save the weights, evaluate every length 1..eval_max_len, and write <run_name>.json. """
+    """Train, save the weights, evaluate every length 1..eval_max_len, and write <run_name>.json."""
     out_dir, checkpoint_dir = Path(out_dir), Path(checkpoint_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -191,11 +202,12 @@ def main():
 
     torch.set_num_threads(args.threads)
     overrides = {"steps": args.steps, "eval_samples": args.eval_samples}
-    config = RunConfig(args.task, args.pos_encoding, args.seed,
-                       **{k: v for k, v in overrides.items() if v is not None})
+    config = RunConfig(args.task, args.pos_encoding, args.seed, **{k: v for k, v in overrides.items() if v is not None})
     result = run(config, args.out, args.checkpoints, verbose=True)
-    print(f"{run_name(config)}: trained in {result['train_seconds']}s, "
-          f"in-distribution exact match {in_distribution_exact_match(result):.3f}")
+    print(
+        f"{run_name(config)}: trained in {result['train_seconds']}s, "
+        f"in-distribution exact match {in_distribution_exact_match(result):.3f}"
+    )
 
 
 if __name__ == "__main__":

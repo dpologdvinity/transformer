@@ -42,12 +42,12 @@ def test_batch_format_and_loss_mask(task):
     seq = torch.cat([batch.inputs[:, :1], batch.targets], dim=1)  # rebuild full sequences
     for row, targets, mask in zip(seq, batch.targets, batch.loss_mask, strict=True):
         n = int((row >= 4).sum()) // 2
-        x, y = row[1:n + 1], row[n + 2:2 * n + 2]
+        x, y = row[1 : n + 1], row[n + 2 : 2 * n + 2]
         assert row[0] == BOS and row[n + 1] == SEP and row[2 * n + 2] == EOS
-        assert torch.all(row[2 * n + 3:] == PAD)
+        assert torch.all(row[2 * n + 3 :] == PAD)
         assert torch.equal(y, make_target(task, x.unsqueeze(0))[0])
         assert mask.sum() == n + 1
-        assert torch.equal(targets[mask], row[n + 2:2 * n + 3])  # loss covers exactly y, EOS
+        assert torch.equal(targets[mask], row[n + 2 : 2 * n + 3])  # loss covers exactly y, EOS
 
 
 def test_batch_lengths_cover_range():

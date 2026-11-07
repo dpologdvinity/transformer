@@ -11,7 +11,8 @@ TINY = dict(d_model=32, num_heads=2, num_layers=2, d_ff=64)
 
 
 class OracleModel:
-    """ Stub whose next-token predictions are the correct answer, optionally corrupted. """
+    """Stub whose next-token predictions are the correct answer, optionally corrupted."""
+
     def __init__(self, task, corrupt=None):
         self.task, self.corrupt = task, corrupt
 
@@ -20,14 +21,14 @@ class OracleModel:
 
     def __call__(self, tokens):
         n = (tokens.size(1) - 2) // 2  # tokens = [BOS, x1..xn, SEP, y1..yn]
-        x = tokens[:, 1:n + 1]
+        x = tokens[:, 1 : n + 1]
         answer = torch.cat([make_target(self.task, x), torch.full((x.size(0), 1), EOS)], dim=1)
         if self.corrupt == "drop_eos":
             answer[:, -1] = PAD
         if self.corrupt == "early_eos":
             answer[:, 0] = EOS
         logits = torch.zeros(*tokens.shape, VOCAB_SIZE)
-        logits[:, n + 1:].scatter_(-1, answer.unsqueeze(-1), 1.0)
+        logits[:, n + 1 :].scatter_(-1, answer.unsqueeze(-1), 1.0)
         return logits
 
 
@@ -62,6 +63,7 @@ def test_smoke_training_reduces_loss():
 def test_non_finite_loss_raises(monkeypatch):
     def nan_forward(self, tokens):
         return torch.full((*tokens.shape, 24), float("nan"), requires_grad=True)
+
     monkeypatch.setattr(DecoderOnlyLM, "forward", nan_forward)
     with pytest.raises(RuntimeError, match="non-finite loss in copy_none_seed0 at step"):
         train(RunConfig("copy", "none", 0, steps=5, **TINY))

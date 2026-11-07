@@ -4,6 +4,7 @@ Algorithmic sequence tasks for a decoder-only model.
 Every example is one sequence:  [BOS, x1..xn, SEP, y1..yn, EOS]
 where y is the task applied to x. The model is trained to predict y and EOS.
 """
+
 from dataclasses import dataclass
 
 import torch
@@ -31,8 +32,8 @@ def make_target(task, x):
 
 @dataclass
 class Batch:
-    inputs: torch.Tensor     # (batch_size, L) tokens fed to the model
-    targets: torch.Tensor    # (batch_size, L) next-token labels
+    inputs: torch.Tensor  # (batch_size, L) tokens fed to the model
+    targets: torch.Tensor  # (batch_size, L) next-token labels
     loss_mask: torch.Tensor  # (batch_size, L) True where the label is y1..yn or EOS
 
 
@@ -54,8 +55,8 @@ def sample_batch(task, batch_size, min_len, max_len, generator):
         x = _sample_symbols(1, n, generator)[0]
         y = make_target(task, x.unsqueeze(0))[0]
         row = torch.cat([torch.tensor([BOS]), x, torch.tensor([SEP]), y, torch.tensor([EOS])])
-        seq[i, :len(row)] = row
-        is_answer[i, n + 2:2 * n + 3] = True  # positions of y1..yn, EOS
+        seq[i, : len(row)] = row
+        is_answer[i, n + 2 : 2 * n + 3] = True  # positions of y1..yn, EOS
 
     # Shift by one: the token at position t is predicted from positions < t
     return Batch(inputs=seq[:, :-1], targets=seq[:, 1:], loss_mask=is_answer[:, 1:])
@@ -74,7 +75,7 @@ def sample_fixed_length(task, batch_size, n, generator):
 
 
 def source_positions(task, n):
-    """ Sequence index of the input symbol that each output y_k should copy. """
+    """Sequence index of the input symbol that each output y_k should copy."""
     positions = torch.arange(1, n + 1)
     if task == "copy":
         return positions
@@ -84,5 +85,5 @@ def source_positions(task, n):
 
 
 def answer_query_positions(n):
-    """ Sequence index whose next-token prediction is y_k (SEP for y_1, then y_1..y_{n-1}). """
+    """Sequence index whose next-token prediction is y_k (SEP for y_1, then y_1..y_{n-1})."""
     return torch.arange(n + 1, 2 * n + 1)

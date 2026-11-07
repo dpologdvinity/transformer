@@ -6,6 +6,7 @@ Time greedy generation with and without the KV cache.
 Cached and uncached runs alternate within each repetition so both see the same
 background load; the reported time is the median over repetitions.
 """
+
 import argparse
 import json
 import statistics
@@ -25,7 +26,7 @@ def time_generation(model, prompt, num_new_tokens, use_cache):
 
 
 def benchmark(model, prompt_len, new_tokens, batch_size, reps):
-    """ :return: one row per generated length with median seconds and the speedup. """
+    """:return: one row per generated length with median seconds and the speedup."""
     prompt = torch.randint(4, VOCAB_SIZE, (batch_size, prompt_len), generator=torch.Generator().manual_seed(0))
     rows = []
     for n in new_tokens:
@@ -34,12 +35,20 @@ def benchmark(model, prompt_len, new_tokens, batch_size, reps):
             for use_cache in (True, False):
                 times[use_cache].append(time_generation(model, prompt, n, use_cache))
         cached, uncached = statistics.median(times[True]), statistics.median(times[False])
-        row = {"prompt_len": prompt_len, "new_tokens": n, "batch_size": batch_size,
-               "cached_s": round(cached, 4), "uncached_s": round(uncached, 4),
-               "speedup": round(uncached / cached, 2)}
+        row = {
+            "prompt_len": prompt_len,
+            "new_tokens": n,
+            "batch_size": batch_size,
+            "cached_s": round(cached, 4),
+            "uncached_s": round(uncached, 4),
+            "speedup": round(uncached / cached, 2),
+        }
         rows.append(row)
-        print(f"batch {batch_size:>2}  {n:>3} new tokens: cached {row['cached_s']:.3f}s  "
-              f"uncached {row['uncached_s']:.3f}s  speedup {row['speedup']:.1f}x", flush=True)
+        print(
+            f"batch {batch_size:>2}  {n:>3} new tokens: cached {row['cached_s']:.3f}s  "
+            f"uncached {row['uncached_s']:.3f}s  speedup {row['speedup']:.1f}x",
+            flush=True,
+        )
     return rows
 
 
@@ -56,10 +65,15 @@ def main():
     model = build_model(config).eval()
     rows = []
     for batch_size in (1, 64):
-        rows += benchmark(model, prompt_len=16, new_tokens=tuple(args.new_tokens),
-                          batch_size=batch_size, reps=args.reps)
-    result = {"model": {k: getattr(config, k) for k in ("d_model", "num_heads", "num_layers", "d_ff")},
-              "threads": 1, "reps": args.reps, "rows": rows}
+        rows += benchmark(
+            model, prompt_len=16, new_tokens=tuple(args.new_tokens), batch_size=batch_size, reps=args.reps
+        )
+    result = {
+        "model": {k: getattr(config, k) for k in ("d_model", "num_heads", "num_layers", "d_ff")},
+        "threads": 1,
+        "reps": args.reps,
+        "rows": rows,
+    }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, indent=2) + "\n")

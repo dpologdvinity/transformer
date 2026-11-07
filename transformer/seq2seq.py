@@ -19,16 +19,14 @@ class Transformer(nn.Module):
         self.tgt_embedding = TokenAndPositionalEmbedding(tgt_vocab_size, d_model, max_seq_len)
 
         # 2. Encoder Stack
-        self.encoder_layers = nn.ModuleList([
-            TransformerEncoderBlock(d_model, num_heads, d_ff, dropout)
-            for _ in range(num_layers)
-        ])
+        self.encoder_layers = nn.ModuleList(
+            [TransformerEncoderBlock(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
+        )
 
         # 3. Decoder Stack
-        self.decoder_layers = nn.ModuleList([
-            TransformerDecoderBlock(d_model, num_heads, d_ff, dropout)
-            for _ in range(num_layers)
-        ])
+        self.decoder_layers = nn.ModuleList(
+            [TransformerDecoderBlock(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
+        )
 
         # 4. Final Linear Layer (Project to Target Vocab)
         self.final_linear = nn.Linear(d_model, tgt_vocab_size)
@@ -89,7 +87,7 @@ def greedy_decode(model, src_seq, max_len, start_symbol=SOS_IDX, src_mask=None):
     ys = torch.ones(1, 1).fill_(start_symbol).type(torch.long).to(device)
 
     # 3. Autoregressive generation
-    for _ in range(max_len-1):
+    for _ in range(max_len - 1):
         # Create causal mask for current sequence length
         causal_mask = create_causal_mask(ys.size(1)).to(device)
 

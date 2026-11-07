@@ -10,7 +10,8 @@ POSITIONAL_ENCODINGS = ("none", "sinusoidal", "rope", "alibi")
 
 
 class KVCache:
-    """ Keys and values of every layer for the tokens processed so far. """
+    """Keys and values of every layer for the tokens processed so far."""
+
     def __init__(self):
         self.layers = []
         self.length = 0
@@ -27,8 +28,8 @@ class DecoderOnlyLM(nn.Module):
     The positional encoding is selectable so encodings can be compared on an
     otherwise identical architecture.
     """
-    def __init__(self, vocab_size, d_model, num_heads, num_layers, d_ff, pos_encoding,
-                 max_seq_len=256, dropout=0.0):
+
+    def __init__(self, vocab_size, d_model, num_heads, num_layers, d_ff, pos_encoding, max_seq_len=256, dropout=0.0):
         super(DecoderOnlyLM, self).__init__()
         if pos_encoding not in POSITIONAL_ENCODINGS:
             raise ValueError(f"unknown positional encoding {pos_encoding!r}, expected one of {POSITIONAL_ENCODINGS}")
@@ -44,17 +45,16 @@ class DecoderOnlyLM(nn.Module):
         #    alibi:      distance penalty added to every attention score
         self.token_embed = nn.Embedding(vocab_size, d_model)
         if pos_encoding == "sinusoidal":
-            self.register_buffer('pe', sinusoidal_table(max_seq_len, d_model), persistent=False)
+            self.register_buffer("pe", sinusoidal_table(max_seq_len, d_model), persistent=False)
         if pos_encoding == "alibi":
-            self.register_buffer('alibi', alibi_bias(num_heads, max_seq_len), persistent=False)
+            self.register_buffer("alibi", alibi_bias(num_heads, max_seq_len), persistent=False)
         rotary = RotaryEmbedding(d_model // num_heads, max_seq_len) if pos_encoding == "rope" else None
-        self.register_buffer('causal_mask', create_causal_mask(max_seq_len), persistent=False)
+        self.register_buffer("causal_mask", create_causal_mask(max_seq_len), persistent=False)
 
         # 2. Decoder stack (self-attention only, so the encoder block is reused)
-        self.layers = nn.ModuleList([
-            TransformerEncoderBlock(d_model, num_heads, d_ff, dropout, rotary)
-            for _ in range(num_layers)
-        ])
+        self.layers = nn.ModuleList(
+            [TransformerEncoderBlock(d_model, num_heads, d_ff, dropout, rotary) for _ in range(num_layers)]
+        )
         self.dropout = nn.Dropout(dropout)
 
         # 3. Project to vocabulary
@@ -100,7 +100,7 @@ class DecoderOnlyLM(nn.Module):
             for _ in range(num_new_tokens):
                 next_token = self(tokens)[:, -1].argmax(dim=-1, keepdim=True)
                 tokens = torch.cat([tokens, next_token], dim=1)
-            return tokens[:, prompt.size(1):]
+            return tokens[:, prompt.size(1) :]
 
         if num_new_tokens == 0:
             return prompt[:, :0]
@@ -115,5 +115,5 @@ class DecoderOnlyLM(nn.Module):
         return torch.cat(generated, dim=1)
 
     def attention_maps(self):
-        """ Attention weights from the last forward pass, one (B, H, T, T) tensor per layer. """
+        """Attention weights from the last forward pass, one (B, H, T, T) tensor per layer."""
         return [layer.mha.attention_weights for layer in self.layers]
